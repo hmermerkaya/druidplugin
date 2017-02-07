@@ -1,0 +1,63 @@
+# Grafana plugin for [Druid](http://druid.io/)
+
+This is my private fork of the Druid plugin.  It may not fit for general public use.  Some fixes are specific for my use case, incomplete e.g. template variables work for dimensions of groupBy queries but not for other query types.
+
+dist folder is not up-to-date.  Please compile yourself.
+
+# setup dev env, and build
+- go get grafana with GOPATH=$HOME/golang
+- you get $HOME/golang/src/github.com/grafana
+- checkout this repo
+
+```
+cd druidplugin
+npm install
+cd src
+ln -s $HOME/golang/src/github.com/grafana/grafana/public/app
+ln -s $HOME/golang/src/github.com/grafana/grafana/public/vendor
+cd ..
+gulp setup
+gulp
+./patch.sh
+```
+
+# Compile
+
+I'm hoping to remove the patch hack shortly.
+
+```
+gulp
+./patch.sh
+```
+
+# WIP
+- support template variables for metrics
+- clearly define metrics and dimensions.  Grafana lacks clear distinction of metrics and dimensions (needs fix in Grafana as well?)
+- fix filter editor.  add tree builder
+- clean up `this` for callbacks
+- unit test
+
+# Done
+- use TypeScript (8/2/2016)
+- build system  (8/4/2016)
+  * Added systemjs-builder in order to include npm modules in the actual plugin (not the dev env)
+- decided not to include PlyQL for now (9/14/2016)
+- add checkbox in the query editor to include/exclude aggregators in response series in order to satisfy single Value widget requirement (9/20/2016)
+- fix dimension filters (9/26/2016)
+- fix granularity for time-bucketing  (9/26/2016)
+- support template variable capability for groupBy dimensions (10/17/2016)
+- support math expression in the post-aggregators (10/25/2016)
+- fix count and other aggregators editor to be more natural math expression (10/25/2016)
+
+# License
+Licensed under the Apache License, Version 2.0 -- same as the original
+
+JavaScript Expression Parser http://jsep.from.so -- MIT license
+
+# Credits
+- Rob Marston
+- Kenji Noguchi
+- Abhishek Sant
+- Carl Bergquist
+- Quantiply Corporation
+

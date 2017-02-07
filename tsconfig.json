@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "target": "es5",
+    "module": "system",
+    "noEmitOnError": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "files": [
+    "src/config_ctrl.ts",
+    "src/datasource.ts",
+    "src/query_ctrl.ts",
+    "src/module.ts",
+    "src/config_ctrl.ts",
+    "src/jsep.d.ts"
+  ],
+  "exclude": [
+    "typings",
+    "node_modules"
+  ]
+}

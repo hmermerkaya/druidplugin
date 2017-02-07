@@ -1,0 +1,584 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+  <div class="gf-form-inline">
+    <div class="gf-form max-width-17">
+      <label class="gf-form-label query-keyword width-9">
+        Datasource
+        <label class="gf-form-label" bs-tooltip="ctrl.errors.druidDS" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
+          <i class="fa fa-warning"></i>
+        </label>
+      </label>
+      <input type="text" class="gf-form-input input-medium" ng-model="ctrl.target.druidDS" spellcheck='false' bs-typeahead="ctrl.listDataSources" placeholder="druidDS" data-min-length=0 ng-blur="ctrl.targetBlur();ctrl.targetBlur1()">
+      </input>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-4">
+        Type
+        <a bs-tooltip="ctrl.errors.queryTypes" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.queryTypes">
+          <i class="fa fa-warning"></i>
+        </a>
+      </label>
+      <div class="gf-form-select-wrapper max-width-15">
+        <select ng-model="ctrl.target.queryType" class="gf-form-input" ng-options="type for type in ctrl.queryTypes" ng-change="ctrl.targetBlur()">
+        </select>
+      </div>
+    </div>
+    <gf-form-switch class="gf-form" label="Custom Granularity" label-class="query-keyword" checked="ctrl.target.shouldOverrideGranularity" on-change="ctrl.targetBlur()">
+    </gf-form-switch>
+
+    <div class="gf-form" ng-hide="!ctrl.target.shouldOverrideGranularity">
+      <div class="gf-form-select-wrapper max-width-15">
+        <select ng-model="ctrl.target.customGranularity" class="gf-form-input" ng-options="granularity for granularity in ctrl.customGranularity" ng-change="ctrl.targetBlur()">
+        </select>
+      </div>
+    </div>
+
+    <div class="gf-form max-width-20" ng-hide="ctrl.target.shouldOverrideGranularity">
+      <label class="gf-form-label query-keyword">
+        Max Data Points
+        <label class="gf-form-label" bs-tooltip="ctrl.errors.maxDataPoints" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.maxDataPoints">
+          <i class="fa fa-warning"></i>
+        </label>
+      </label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.maxDataPoints" spellcheck='false' placeholder="default" ng-blur="ctrl.targetBlur()">
+      </input>
+    </div>
+    
+
+    
+     
+   
+  </div>
+
+  <div class="gf-form-inline" ng-switch on="ctrl.target.queryType">
+    <div ng-switch-when="topN" class="gf-form max-width-20">
+      <label class="gf-form-label query-keyword width-9">
+        Dimension
+      </label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.dimension" spellcheck='false' placeholder="dimension" bs-typeahead="ctrl.getDimensions" data-min-length=0 ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.dimension" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.dimension">
+        <i class="fa fa-warning"></i>
+      </label>
+    </div>
+    <div ng-switch-when="topN" class="gf-form">
+
+      <label class="gf-form-label query-keyword width-4">
+        Metric
+      </label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.druidMetric" spellcheck='false' placeholder="metric" ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.druidMetric" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.druidMetric">
+        <i class="fa fa-warning"></i>
+      </label>
+      <label class="gf-form-label query-keyword width-4">
+        Limit
+      </label>
+      <input type="number" required class="gf-form-input input-small" ng-model="ctrl.target.limit" spellcheck='false' ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.limit" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.limit">
+        <i class="fa fa-warning"></i>
+      </label>
+    </div>
+    <div ng-switch-when="groupBy" class="gf-form max-width-20">
+      <label class="gf-form-label query-keyword width-9">
+        Group By
+      </label>
+      <input type="text" class="gf-form-input input-medium" ng-model="ctrl.target.groupBy" spellcheck='false' placeholder="dim1,dim2" bs-typeahead="ctrl.getDimensions" data-min-length=0 ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.groupBy" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.groupBy">
+        <i class="fa fa-warning"></i>
+      </label>
+    </div>
+
+    <!-- group by -->
+    <div ng-switch-when="groupBy" class="gf-form">
+
+      <label class="gf-form-label query-keyword width-4">
+        Limit
+      </label>
+      <input type="number" required class="gf-form-input input-small" ng-model="ctrl.target.limit" spellcheck='false' ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.limit" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.limit">
+        <i class="fa fa-warning"></i>
+      </label>
+    </div>
+    <div ng-switch-when="groupBy" class="gf-form">
+      <label class="gf-form-label query-keyword width-5">
+        Order
+      </label>
+      <input type="text" required class="gf-form-input input-medium" ng-model="ctrl.target.orderBy" spellcheck='false' placeholder="col1,col2" bs-typeahead="ctrl.getDimensions" ng-blur="ctrl.targetBlur()" />
+      <label class="gf-form-label" bs-tooltip="ctrl.target.errors.getDimensions" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.getDimensions">
+        <i class="fa fa-warning"></i>
+      </label>
+    </div>
+    <div ng-switch-when="select" class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Dimensions
+        <info-popover mode="right-normal">
+          (empty = *)
+        </info-popover>
+      </label>
+    </div>
+    <div class="gf-form" ng-switch-when="select" ng-repeat="dim in ctrl.target.selectDimensions track by $index">
+      <label class="gf-form-label">&nbsp;{{dim}}
+  <a ng-click="ctrl.editDimension($index)">
+    <i class="fa fa-pencil"></i>
+  </a>
+        <a ng-click="ctrl.removeSelectDimension($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </label>
+    </div>
+    <div class="gf-form" ng-switch-when="select" ng-hide="ctrl.addDimensionsMode">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addSelectDimensions()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+    <div class="gf-form" ng-switch-when="select" ng-show="ctrl.addDimensionsMode">
+      <input type="text" class="gf-form-input input-medium" ng-model="ctrl.target.currentSelect.dimension" spellcheck='false' placeholder="dimension" data-min-length=0 data-items=100 bs-typeahead="ctrl.getDimensions" />
+      <label class="gf-form-label" ng-show="ctrl.errors.selectDimensions">
+        <a bs-tooltip="ctrl.errors.selectDimensions" style="color: rgb(229, 189, 28)">
+          <i class="fa fa-warning"></i>
+        </a>
+      </label>
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addSelectDimensions()" ng-hide="ctrl.errors.selectDimensions">add dim</a>
+        <a ng-click="ctrl.clearCurrentSelectDimension()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div ng-switch-when="select" class="gf-form">
+      <label class="gf-form-label query-keyword width-8">
+        Metrics
+        <info-popover mode="right-normal">
+          (empty = *)
+        </info-popover>
+      </label>
+    </div>
+    <div class="gf-form" ng-switch-when="select" ng-repeat="metric in ctrl.target.selectMetrics track by $index">
+      <label class="gf-form-label">&nbsp;{{metric}}
+  <a ng-click="ctrl.editSelectMetric($index)">
+    <i class="fa fa-pencil"></i>
+  </a>
+        <a ng-click="ctrl.removeSelectMetric($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </label>
+    </div>
+    <div class="gf-form" ng-switch-when="select" ng-hide="ctrl.addMetricsMode">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addSelectMetrics()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+    <div class="gf-form" ng-show="ctrl.addMetricsMode">
+      <input type="text" class="gf-form-input input-medium" ng-model="ctrl.target.currentSelect.metric" spellcheck='false' placeholder="metric" data-min-length=0 data-items=100 bs-typeahead="ctrl.getMetrics" />
+      <label class="gf-form-label" ng-show="ctrl.errors.selectMetrics">
+        <a bs-tooltip="ctrl.errors.selectMetrics" style="color: rgb(229, 189, 28)">
+          <i class="fa fa-warning"></i>
+        </a>
+      </label>
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addSelectMetrics()" ng-hide="ctrl.errors.selectMetrics">add metric</a>
+        <a ng-click="ctrl.clearCurrentSelectMetric()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div ng-switch-when="select" class="gf-form">
+      <label class="gf-form-label query-keyword">
+        threshold
+      </label>
+      <input type="number" required class="gf-form-input input-small" ng-model="ctrl.target.selectThreshold" placeholder="5" spellcheck='false' ng-blur="ctrl.targetBlur()" />
+      <a bs-tooltip="ctrl.target.errors.selectThreshold" style="color: rgb(229, 189, 28)" ng-show="ctrl.target.errors.selectThreshold">
+        <i class="fa fa-warning"></i>
+      </a>
+    </div>
+    <div ng-if="ctrl.target.queryType != 'timeseries'" class="gf-form gf-form--grow">
+      <div ng-if="ctrl.target.queryType != 'timeseries'" class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Filters
+      </label>
+    </div>
+
+    <div class="gf-form" ng-repeat="filter in ctrl.target.filters track by $index" ng-switch on="filter.type">
+      <label class="gf-form-label" ng-if="filter.negate">NOT&nbsp;(&nbsp;</label>
+      <label ng-switch-when="regex" class="gf-form-label">{{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.pattern}}
+        <a ng-click="ctrl.editFilter($index)">
+          <i class="fa fa-pencil"></i>
+        </a>
+        <a ng-click="ctrl.removeFilter($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </label>
+      <label ng-switch-when="selector" class="gf-form-label">
+        {{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.value}}
+        <a ng-click="ctrl.editFilter($index)">
+          <i class="fa fa-pencil"></i>
+        </a>
+        <a ng-click="ctrl.removeFilter($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </label>
+      <label ng-switch-when="javascript" class="gf-form-label">
+        {{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.function}}
+        <a ng-click="ctrl.editFilter($index)">
+          <i class="fa fa-pencil"></i>
+        </a>
+        <a ng-click="ctrl.removeFilter($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </label>
+      <label class="gf-form-label" ng-if="filter.negate">&nbsp;)</label>
+    </div>
+
+    <div class="gf-form" ng-hide="ctrl.addFilterMode">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addFilter()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+
+    <div class="gf-form" ng-show="ctrl.addFilterMode">
+      <div class="gf-form-select-wrapper">
+        <select ng-model="ctrl.target.currentFilter.type" class="gf-form-input width-10" ng-options="type for type in ctrl.filterTypes" ng-change="ctrl.targetBlur()">
+        </select>
+      </div>
+    </div>
+
+    <div class="gf-form" ng-show="ctrl.addFilterMode" ng-switch on="ctrl.target.currentFilter.type">
+      <input type="text" ng-switch-when="regex" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.dimension" placeholder="dimension" bs-typeahead="ctrl.getDimensions" data-min-length=0 ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="regex" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.pattern" ng-blur="ctrl.targetBlur()" placeholder="pattern">
+    </div>
+    <div class="gf-form" ng-show="ctrl.addFilterMode" ng-switch on="ctrl.target.currentFilter.type">
+      <input type="text" ng-switch-when="selector" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.dimension" placeholder="dimension" bs-typeahead="ctrl.getDimensions" data-min-length=0 ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="selector" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.value" ng-blur="ctrl.targetBlur()" placeholder="value">
+    </div>
+    <div class="gf-form" ng-show="ctrl.addFilterMode" ng-switch on="ctrl.target.currentFilter.type">
+      <input type="text" ng-switch-when="javascript" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.dimension" placeholder="dimension" bs-typeahead="ctrl.getDimensions" data-min-length=0 ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="javascript" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentFilter.function" placeholder="func" ng-blur="ctrl.targetBlur()" placeholder="value">
+    </div>
+    <gf-form-switch ng-show="ctrl.addFilterMode" ng-switch on="ctrl.target.currentFilter.type" class="gf-form" label="Negate" label-class="query-keyword" checked="ctrl.target.currentFilter.negate">
+    </gf-form-switch>
+    <div class="gf-form" ng-show="ctrl.addFilterMode">
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addFilter()">add filter</a>
+        <a ng-click="ctrl.clearCurrentFilter()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Aggregations
+      </label>
+    </div>
+
+    <div class="gf-form" ng-repeat="aggregator in ctrl.target.aggregators track by $index" class="gf-form">
+      <div ng-switch on="aggregator.type">
+        <div ng-switch-when="count">
+          <label class="gf-form-label">
+            {{aggregator.name}}={{aggregator.type}}() <i ng:class="{true:'fa fa-eye', false: 'fa fa-eye-slash'}[aggregator.display]"></i>
+      <a ng-click="ctrl.editAggregator($index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+            <a ng-click="ctrl.removeAggregator($index)">
+              <i class="fa fa-remove"></i>
+            </a>
+          </label>
+        </div>
+        <div ng-switch-default>
+          <!-- other than count -->
+          <label class="gf-form-label">
+            {{aggregator.name}}={{aggregator.type}}({{aggregator.fieldName}}) <i ng:class="{true:'fa fa-eye', false: 'fa fa-eye-slash'}[aggregator.display]"></i>
+      <a ng-click="ctrl.editAggregator($index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+            <a ng-click="ctrl.removeAggregator($index)">
+              <i class="fa fa-remove"></i>
+            </a>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="gf-form" ng-hide="ctrl.addAggregatorMode">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addAggregator()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+    <div class="gf-form" ng-show="ctrl.addAggregatorMode" ng-switch on="ctrl.target.currentAggregator.type">
+      <input type="text" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator.name" placeholder="output name" ng-blur="ctrl.targetBlur()">
+      <span>=</span>
+      <select ng-model="ctrl.target.currentAggregator.type" class="gf-form-input" ng-options="type for type in ctrl.aggregatorTypes" ng-change="ctrl.targetBlur()">
+      </select>
+      (<input type="text" ng-switch-when="longSum" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator.fieldName" ng-blur="ctrl.targetBlur()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+      <input type="text" ng-switch-when="doubleSum" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator.fieldName" ng-blur="ctrl.targetBlur()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+      <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator.fieldName" ng-blur="ctrl.targetBlur()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+      <input type="text" ng-switch-when="hyperUnique" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator.fieldName" ng-blur="ctrl.targetBlur()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+      <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator.resolution" placeholder="resolution" ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator.numBuckets" placeholder="numBuckets" ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator.lowerLimit" placeholder="lowerLimit" ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator.upperLimit" placeholder="upperLimit" ng-blur="ctrl.targetBlur()">)
+    </div>
+
+    <gf-form-switch class="gf-form" ng-show="ctrl.addAggregatorMode" label="Display" label-class="query-keyword" checked="ctrl.target.currentAggregator.display"></gf-form-switch>
+    <div class="gf-form" ng-show="ctrl.addAggregatorMode">
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addAggregator()">add agg</a>
+        <a ng-click="ctrl.clearCurrentAggregator()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+
+  
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Post Aggs
+      </label>
+    </div>
+
+    <div class="gf-form" ng-repeat="postAggregator in ctrl.target.postAggregators track by $index" class="gf-form">
+      <div ng-switch on="postAggregator.type">
+        <div ng-switch-when="arithmetic">
+          <label class="gf-form-label">
+            {{postAggregator.name}} = {{postAggregator.expression}}
+      <a ng-click="ctrl.editPostAggregator($index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+            <a ng-click="ctrl.removePostAggregator($index)">
+              <i class="fa fa-remove"></i>
+            </a>
+          </label>
+        </div>
+        <div ng-switch-when="quantile">
+          <label class="gf-form-label">
+            {{postAggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{postAggregator.name}},&nbsp;field&nbsp;=&nbsp;{{postAggregator.fieldName}}, &nbsp;prob&nbsp;=&nbsp;{{postAggregator.probability}}
+      <a ng-click="ctrl.editPostAggregator($index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+            <a ng-click="ctrl.removePostAggregator($index)">
+              <i class="fa fa-remove"></i>
+            </a>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="gf-form" ng-hide="ctrl.addPostAggregatorMode">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addPostAggregator()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+    <div class="gf-form-select-wrapper width-8" ng-show="ctrl.addPostAggregatorMode">
+      <select ng-model="ctrl.target.currentPostAggregator.type" class="gf-form-input" ng-options="type for type in ctrl.postAggregatorTypes" ng-change="ctrl.targetBlur()"></select>
+    </div>
+
+    <!-- arithmetic -->
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode" ng-switch on="ctrl.target.currentPostAggregator.type">
+      <input type="text" ng-switch-when="arithmetic" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.name" placeholder="output name" ng-blur="ctrl.targetBlur()"> =
+      <input type="text" ng-switch-when="arithmetic" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.expression" placeholder="expression" ng-blur="ctrl.targetBlur()">
+    </div>
+
+    <!-- quantile -->
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode" ng-switch on="ctrl.target.currentPostAggregator.type">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.name" placeholder="output name" ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.fieldName" placeholder="agg name" ng-blur="ctrl.targetBlur()">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.probability" placeholder="probability" ng-blur="ctrl.targetBlur()">
+    </div>
+
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode">
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addPostAggregator()">add post-agg</a>
+        <a ng-click="ctrl.clearCurrentPostAggregator()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+
+  <div class="gf-form">
+    <label class="gf-form-label query-keyword width-9">
+      PredPostAggs
+      <a bs-tooltip="ctrl.errors.queryTypes" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.queryTypes">
+        <i class="fa fa-warning"></i>
+      </a>
+    </label>
+    <div class="gf-form-select-wrapper max-width-15">
+      <select ng-model="ctrl.target.currentPrePostAggID" class="gf-form-input" ng-options="postagg for postagg in ctrl.target.prePostAggsIDs"  >
+      </select>
+    </div>
+    <div class="gf-form gf-form--offset-0">
+      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addPredefinedPostAggregator()" >
+        <i class="fa fa-plus"></i>&nbsp;
+        Add PredPostAggr
+      </button>
+
+    </div>
+
+      <a ng-click="ctrl.clearPredefinedPostAggregator()"> <i class="fa fa-remove"></i></a> &nbsp;&nbsp;
+     <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.targetBlur1()" >
+        Update AllPredPostAggrs
+      </button>
+
+     <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.clearAllPredefinedPostAggregators()" >
+      Clear AllPredPostAggrs
+       </button>  
+  
+  </div>
+  
+   
+  <div class="gf-form-inline">
+    <div class="gf-form gf-form--offset-1">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">
+            Aggregations
+          </label>
+        </div>
+        </div>
+        <div class="gf-form" ng-repeat="aggregator1 in ctrl.target.aggregators1 track by $index" class="gf-form">
+          <div ng-switch on="aggregator1.type">
+            <div ng-switch-when="count">
+              <label class="gf-form-label">
+                {{aggregator1.name}}={{aggregator1.type}}() 
+          
+              </label>
+            </div>
+            <div ng-switch-default>
+              <!-- other than count -->
+              <label class="gf-form-label">
+                {{aggregator1.name}}={{aggregator1.type}}({{aggregator1.fieldName}}) 
+          
+                
+              </label>
+            </div>
+          </div>
+        
+       </div> 
+       <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
+
+   </div>
+
+       <!--  <div class="gf-form" ng-hide="ctrl.addAggregatorMode1">
+          <label class="gf-form-label query-keyword">
+            <a ng-click="ctrl.addAggregator1()"><i class="fa fa-plus"></i></a>
+          </label>
+        </div> -->
+        <!-- <div class="gf-form" ng-show="ctrl.addAggregatorMode1" ng-switch on="ctrl.target.currentAggregator1.type">
+          <input type="text" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator1.name" placeholder="output name" ng-blur="ctrl.targetBlur1()">
+          <span>=</span>
+          <select ng-model="ctrl.target.currentAggregator1.type" class="gf-form-input" ng-options="type for type in ctrl.aggregatorTypes" ng-change="ctrl.targetBlur1()">
+          </select>
+          (<input type="text" ng-switch-when="longSum" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator1.fieldName" ng-blur="ctrl.targetBlur1()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+          <input type="text" ng-switch-when="doubleSum" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator1.fieldName" ng-blur="ctrl.targetBlur1()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+          <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator1.fieldName" ng-blur="ctrl.targetBlur1()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+          <input type="text" ng-switch-when="hyperUnique" class="input-small gf-form-input width-10" spellcheck='false' ng-model="ctrl.target.currentAggregator1.fieldName" ng-blur="ctrl.targetBlur1()" placeholder="metric name" bs-typeahead="ctrl.getMetrics" data-min-length=0>
+          <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator1.resolution" placeholder="resolution" ng-blur="ctrl.targetBlur1()">
+          <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator1.numBuckets" placeholder="numBuckets" ng-blur="ctrl.targetBlur1()">
+          <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator1.lowerLimit" placeholder="lowerLimit" ng-blur="ctrl.targetBlur1()">
+          <input type="text" ng-switch-when="approxHistogramFold" class="input-small gf-form-input width-7" spellcheck='false' ng-model="ctrl.target.currentAggregator1.upperLimit" placeholder="upperLimit" ng-blur="ctrl.targetBlur1()">)
+        </div> -->
+
+   <!--  <gf-form-switch class="gf-form" ng-show="ctrl.addAggregatorMode1" label="Display" label-class="query-keyword" checked="ctrl.target.currentAggregator1.display"></gf-form-switch>
+        <div class="gf-form" ng-show="ctrl.addAggregatorMode1">
+          <label class="gf-form-label">
+            <a ng-click="ctrl.addAggregator1()">add agg</a>
+            <a ng-click="ctrl.clearCurrentAggregator1()"><i class="fa fa-remove"></i></a>
+          </label>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
+      </div> -->
+<div class="gf-form-inline">
+  <div class="gf-form gf-form--offset-1">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Post Aggs
+      </label>
+    </div>
+    </div>
+    <div class="gf-form" ng-repeat="postAggregator1 in ctrl.target.postAggregators1 track by $index" class="gf-form">
+      <div ng-switch on="postAggregator1.type">
+        <div ng-switch-when="arithmetic">
+          <label class="gf-form-label">
+            {{postAggregator1.name}} = {{postAggregator1.expression}}
+      
+            
+          </label>
+        </div>
+        <div ng-switch-when="quantile">
+          <label class="gf-form-label">
+            {{postAggregator1.type}}:&nbsp;name&nbsp;=&nbsp;{{postAggregator1.name}},&nbsp;field&nbsp;=&nbsp;{{postAggregator1.fieldName}}, &nbsp;prob&nbsp;=&nbsp;{{postAggregator1.probability}}
+      
+            
+          </label>
+        </div>
+       </div>
+        
+
+    </div>
+    <div class="gf-form gf-form--grow">
+         <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+  </div>  
+ 
+  <!--   <div class="gf-form" ng-hide="ctrl.addPostAggregatorMode1">
+      <label class="gf-form-label query-keyword">
+        <a ng-click="ctrl.addPostAggregator1()"><i class="fa fa-plus"></i></a>
+      </label>
+    </div>
+    <div class="gf-form-select-wrapper width-8" ng-show="ctrl.addPostAggregatorMode1">
+      <select ng-model="ctrl.target.currentPostAggregator1.type" class="gf-form-input" ng-options="type for type in ctrl.postAggregatorTypes" ng-change="ctrl.targetBlur1()"></select>
+    </div>
+
+  
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode1" ng-switch on="ctrl.target.currentPostAggregator1.type">
+      <input type="text" ng-switch-when="arithmetic" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator1.name" placeholder="output name" ng-blur="ctrl.targetBlur1()"> =
+      <input type="text" ng-switch-when="arithmetic" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator1.expression" placeholder="expression" ng-blur="ctrl.targetBlur1()">
+    </div>
+
+  
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode1" ng-switch on="ctrl.target.currentPostAggregator1.type">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator1.name" placeholder="output name" ng-blur="ctrl.targetBlur1()">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator1.fieldName" placeholder="agg name" ng-blur="ctrl.targetBlur1()">
+      <input type="text" ng-switch-when="quantile" class="input-small gf-form-input" spellcheck="false" ng-model="ctrl.target.currentPostAggregator1.probability" placeholder="probability" ng-blur="ctrl.targetBlur1()">
+    </div>
+
+    <div class="gf-form" ng-show="ctrl.addPostAggregatorMode1">
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addPostAggregator1()">add post-agg</a>
+        <a ng-click="ctrl.clearCurrentPostAggregator1()"><i class="fa fa-remove"></i></a>
+      </label>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+  </div> -->
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword width-9">
+        Time Shift
+      </label>
+    </div>
+     
+      <input type="text" class="gf-form-input input-medium max-width-8 ng-pristine ng-untouched ng-valid ng-empty " placeholder="1h or 1d" ng-model="ctrl.target.timeShift"  ng-blur="ctrl.targetBlur();ctrl.targetBlur1()"> 
+      <label class="gf-form-label">
+        <a ng-click="ctrl.addTimeShift()">apply time-shift</a>
+        <a ng-click="ctrl.clearTimeShift()"> <i class="fa fa-remove"></i></a>
+      </label>
+   
+
+  </div>
+
+
+
+</query-editor-row>
