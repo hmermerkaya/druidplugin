@@ -834,7 +834,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function(export
                     }
                     if (this.target.shouldOverrideGranularity) {
                         if (this.target.customGranularity) {
-                            if (!lodash_1.default.contains(this.customGranularity, this.target.customGranularity)) {
+                            if (!lodash_1.default.includes(this.customGranularity, this.target.customGranularity)) {
                                 errs.customGranularity = "Invalid granularity.";
                             }
                         }

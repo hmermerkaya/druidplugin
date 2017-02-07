@@ -514,13 +514,13 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep'], functio
                     var displayAggs = lodash_1.default.filter(aggregators, function (agg) {
                         return agg.display && agg.type !== 'approxHistogramFold';
                     });
-                    return lodash_1.default.union(lodash_1.default.pluck(displayAggs, 'name'), lodash_1.default.pluck(postAggregators, 'name'));
+                    return lodash_1.default.union(lodash_1.default.map(displayAggs, 'name'), lodash_1.default.map(postAggregators, 'name'));
                 };
                 DruidDatasource.getAllMetricNames = function (aggregators, postAggregators) {
                     var displayAggs = lodash_1.default.filter(aggregators, function (agg) {
                         return agg.type !== 'approxHistogramFold';
                     });
-                    return lodash_1.default.union(lodash_1.default.pluck(displayAggs, 'name'), lodash_1.default.pluck(postAggregators, 'name'));
+                    return lodash_1.default.union(lodash_1.default.map(displayAggs, 'name'), lodash_1.default.map(postAggregators, 'name'));
                 };
                 ;
                 DruidDatasource.formatTimestamp = function (ts) {
@@ -596,12 +596,12 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep'], functio
                      */
                     //Get the list of all distinct dimension values for the entire result set
                     var dVals = md.reduce(function (dValsSoFar, tsItem) {
-                        var dValsForTs = lodash_1.default.pluck(tsItem.result, dimension);
+                        var dValsForTs = lodash_1.default.map(tsItem.result, dimension);
                         return lodash_1.default.union(dValsSoFar, dValsForTs);
                     }, {});
                     //Add null for the metric for any missing dimension values per timestamp result
                     md.forEach(function (tsItem) {
-                        var dValsPresent = lodash_1.default.pluck(tsItem.result, dimension);
+                        var dValsPresent = lodash_1.default.map(tsItem.result, dimension);
                         var dValsMissing = lodash_1.default.difference(dVals, dValsPresent);
                         dValsMissing.forEach(function (dVal) {
                             var nullPoint = {};
@@ -630,8 +630,8 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep'], functio
                          ]
                          */
                         var timestamp = DruidDatasource.formatTimestamp(item.timestamp);
-                        var keys = lodash_1.default.pluck(item.result, dimension);
-                        var vals = lodash_1.default.pluck(item.result, metric).map(function (val) {
+                        var keys = lodash_1.default.map(item.result, dimension);
+                        var vals = lodash_1.default.map(item.result, metric).map(function (val) {
                             return [val, timestamp];
                         });
                         return lodash_1.default.zipObject(keys, vals);
@@ -713,8 +713,8 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep'], functio
                     });
                 };
                 DruidDatasource.prototype.convertSelectData = function (data) {
-                    var resultList = lodash_1.default.pluck(data, "result");
-                    var eventsList = lodash_1.default.pluck(resultList, "events");
+                    var resultList = lodash_1.default.map(data, "result");
+                    var eventsList = lodash_1.default.map(resultList, "events");
                     var eventList = lodash_1.default.flatten(eventsList);
                     var result = {};
                     for (var i = 0; i < eventList.length; i++) {
