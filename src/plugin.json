@@ -1,0 +1,27 @@
+{
+  "type": "datasource",
+  "name": "Druid++",
+  "id": "hmermerkaya-druid-datasource",
+  "metrics": true,
+  "info": {
+    "  version": "1.0",
+      "author": {
+       "name": "Hamit Mermerkaya",
+      "url": "https://github.com/hmermerkaya"
+    },
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/hmermerkaya/druidplugin"
+      }
+    ],
+    "logos": {
+      "small": "img/druid_logo.png",
+      "large": "img/druid_logo.png"
+    },
+    "dependencies": {
+      "grafanaVersion": "3.x.x",
+      "plugins": []
+    }
+  }
+}

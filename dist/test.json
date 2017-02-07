@@ -1,0 +1,71 @@
+{
+      "igwcdrv1": {
+        "postaggregations": [
+          {
+            "id": "ds_1_postagg_1", 
+            "name": "ASR(%)",
+            "expression": "100*success/all",
+            "type": "arithmetic",
+            "fn":"+",
+            "aggregations": [
+              {
+                "fieldName": "successdeliverycall",
+                "type": "doubleSum",
+                "name": "success",
+                "display": true
+               
+              },
+              {
+                "type": "count",
+                "name": "all",
+                "display": false
+              }
+            ]
+          },
+          {
+            "id": "ds_1_postagg_2",
+            "name": "ASR_1(%)",
+            "expression": "200*success_1/all_1",
+            "type": "arithmetic",
+            "fn":"+",
+            "aggregations": [ 
+              {
+                "fieldName": "successdeliverycall",
+                "type": "doubleSum",
+                "name": "success_1",
+                "display": true
+              },
+              {
+               "type": "count",
+                "name": "all_1",
+                "display": false 
+              }
+            ]
+          }
+        ]
+      },
+      "igwcdrv0": {
+        "postaggregations": [
+          {
+            "id": "ds_0_postagg_2",
+            "name": "ASR_2(%)",
+            "expression": "400*success_1/all_1",
+            "type": "arithmetic",
+            "fn":"+",
+            "aggregations": [ 
+              {
+                "fieldName": "successdeliverycall",
+                "type": "doubleSum",
+                "name": "success_1",
+                "display": true
+              },
+              {
+               "type": "count",
+                "name": "all_1",
+                "display": false 
+              }
+            ]
+          }
+        ]
+      }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "druidplugin",
+  "version": "1.0.0",
+  "description": "Druid plugin for Grafana v3",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hmermerkaya/druidplugin.git"
+  },
+  "devDependencies": {
+    "@types/jquery": "^2.0.40",
+    "chai": "3.5.0",
+    "del": "*",
+    "gulp": "^3.9.1",
+    "gulp-npm-files": "*",
+    "gulp-shell": "*",
+    "gulp-typescript": "^2.13.6",
+    "jquery": "^3.1.1",
+    "mocha": "2.5.3",
+    "request": "2.73.0",
+    "run-sequence": "*",
+    "systemjs-builder": "*",
+    "typescript": "1.8.10"
+  },
+  "typescript": {
+    "definition": "node.d.ts"
+  },
+  "keywords": [
+    "druid",
+    "sql"
+  ],
+  "author": "Hamit Mermerkaya",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hmermerkaya/druidplugin/issues"
+  },
+  "homepage": "https://github.com/hmermerkaya/druidplugin#readme",
+  "main": "dist/module.js",
+  "dependencies": {
+    "@types/jquery": "^2.0.40"
+  }
+}

@@ -1,0 +1,17 @@
+                      timeseries    topN       groupBy
+dataSource            yes           yes        yes
+descending            optional 
+intervals             yes           yes        yes
+granularity           yes           yes        yes
+filter                optional      optional   optional
+aggregations          yes           yes        yes
+postAggregations      optional      optional   optional
+context               optional      optional   optional
+dimension                           yes
+threshold                           yes
+metric                              yes
+
+dimensions                                     yes
+limitSpec                                      optional
+having                                         optional
+
