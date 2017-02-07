@@ -717,7 +717,7 @@ System.registerDynamic('jsep', [], true, function ($__require, exports, module) 
 });
 ///<reference path="app/headers/common.d.ts" />
 ///<reference path="jsep.d.ts" />
-System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (exports_1, context_1) {
+System.register('query_ctrl.js', ['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (exports_1, context_1) {
     "use strict";
 
     var __moduleName = context_1 && context_1.id;
