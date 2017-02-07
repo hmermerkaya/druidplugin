@@ -633,13 +633,13 @@ export class DruidDatasource {
     var displayAggs = _.filter(aggregators, function (agg) {
       return agg.display && agg.type !== 'approxHistogramFold';
     });
-    return _.union(_.pluck(displayAggs, 'name'), _.pluck(postAggregators, 'name'));
+    return _.union(_.map(displayAggs, 'name'), _.map(postAggregators, 'name'));
   }
   static getAllMetricNames (aggregators, postAggregators) {
     var displayAggs = _.filter(aggregators, function (agg) {
       return /*agg.display &&*/ agg.type !== 'approxHistogramFold';
     });
-    return _.union(_.pluck(displayAggs, 'name'), _.pluck(postAggregators, 'name'));
+    return _.union(_.map(displayAggs, 'name'), _.map(postAggregators, 'name'));
   };
 
   static formatTimestamp(ts) {
@@ -719,13 +719,13 @@ export class DruidDatasource {
 
     //Get the list of all distinct dimension values for the entire result set
     var dVals = md.reduce(function (dValsSoFar, tsItem) {
-      var dValsForTs = _.pluck(tsItem.result, dimension);
+      var dValsForTs = _.map(tsItem.result, dimension);
       return _.union(dValsSoFar, dValsForTs);
     }, {});
 
     //Add null for the metric for any missing dimension values per timestamp result
     md.forEach(function (tsItem) {
-      var dValsPresent = _.pluck(tsItem.result, dimension);
+      var dValsPresent = _.map(tsItem.result, dimension);
       var dValsMissing = _.difference(dVals, dValsPresent);
       dValsMissing.forEach(function (dVal) {
         var nullPoint = {};
@@ -755,8 +755,8 @@ export class DruidDatasource {
        ]
        */
       var timestamp = DruidDatasource.formatTimestamp(item.timestamp);
-      var keys = _.pluck(item.result, dimension);
-      var vals = _.pluck(item.result, metric).map(function (val) {
+      var keys = _.map(item.result, dimension);
+      var vals = _.map(item.result, metric).map(function (val) {
         return [val, timestamp];
       });
       return _.zipObject(keys, vals);
@@ -842,8 +842,8 @@ export class DruidDatasource {
   }
 
   convertSelectData(data) {
-    var resultList = _.pluck(data, "result");
-    var eventsList = _.pluck(resultList, "events");
+    var resultList = _.map(data, "result");
+    var eventsList = _.map(resultList, "events");
     var eventList = _.flatten(eventsList);
     var result = {};
     for (var i = 0; i < eventList.length; i++) {

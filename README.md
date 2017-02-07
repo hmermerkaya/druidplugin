@@ -11,7 +11,10 @@
 
 This plugin is built on the top of an existing Druid plugin (https://github.com/grafana/grafana-plugins)  which used to work on older Grafana versions. With the UI changes done on Grafana-3.0 the existing plugin stopped working. Lot of changes have been made to have it work on Grafana 3.0. It supports timeseries, group by, topN and Select queries.
 
+It supports Grafana 4.1.1.
+
 Lot of features might still not be implemented. Your contributions are welcome.
+ 
 
 ## Plugin development history
 
@@ -33,6 +36,7 @@ New features implemented by Hamit Mermerkaya;
 
 3. Implementing post aggregation in which either of the aggregations could exist in different datasources. Aggregations from different datasource can be invoked by object-property notation. For example in a datasource labeled as "A"  and an aggreation named "agg1", it is 'A.agg1'. Sample usage  is in the DruidPanel screenshot.
 
+4. Some changes have been made to have it work on Grafana 4.1.1
 
 # Licenses
 - Licensed under the Apache License, Version 2.0
