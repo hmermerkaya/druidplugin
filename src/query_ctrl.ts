@@ -436,7 +436,7 @@ export class DruidQueryCtrl extends QueryCtrl {
 
 
 
-        this.target.currentPostAggregator.druidQuery = this.translateToDruid(parse_tree, this.target.currentPostAggregator.name);
+        this.target.currentPostAggregator.druidQuery = this.translateToDruid(parse_tree, this.target.currentPostAggregator.name,check_obj);
 
         this.target.errors = this.validateTarget();
         if (!this.target.errors.currentPostAggregator) {
@@ -522,7 +522,7 @@ export class DruidQueryCtrl extends QueryCtrl {
 
       //var curPrePostAgg=this.target.currentPrePostAggName;
           var curPrePostAgg=this.target.currentPrePostAggID;
-          console.log('curPrePostAgg',curPrePostAgg);
+         // console.log('curPrePostAgg',curPrePostAgg);
          
           var jsonFile_Parsed= this.readTextFile_ajax(this.jsonFile);
 
@@ -553,7 +553,7 @@ export class DruidQueryCtrl extends QueryCtrl {
             } );
 
              
-          console.log("found_prepostagg",found_PrePostAgg);
+         // console.log("found_prepostagg",found_PrePostAgg);
           var keys_list=Object.keys(found_PrePostAgg);
           
          var postAgg:any={};
@@ -654,8 +654,8 @@ export class DruidQueryCtrl extends QueryCtrl {
     targetBlur1  () {
                     
       
-        console.log("this.target.aggregators1;",this.target.aggregators1);
-        console.log("this.target.postAggregators1",this.target.postAggregators1);
+      //  console.log("this.target.aggregators1;",this.target.aggregators1);
+      //  console.log("this.target.postAggregators1",this.target.postAggregators1);
         this.jsonFile_Parsed=this.readTextFile_ajax(this.jsonFile);
 
         if (!_.isEmpty(this.target.druidDS)) {
@@ -673,7 +673,7 @@ export class DruidQueryCtrl extends QueryCtrl {
         if (this.target.druidDS) {
         var postAggs=this.jsonFile_Parsed[this.target.druidDS].postaggregations;
         
-        console.log(" postAggsggggggggg", postAggs )
+      //  console.log(" postAggsggggggggg", postAggs )
         var postAggsSub=[];
 
         postAggs.forEach( function(x,idx){
@@ -728,7 +728,7 @@ export class DruidQueryCtrl extends QueryCtrl {
 
         });
 
-        console.log("this.target.postAggregators1;",this.target.postAggregators1);
+     //   console.log("this.target.postAggregators1;",this.target.postAggregators1);
 
        // this.target.postAggregators1.push(postAgg);
         /*json_file[this.target.druidDS].postaggregations.find( function (x) {
@@ -751,8 +751,35 @@ export class DruidQueryCtrl extends QueryCtrl {
       if (!this.target.timeShift) {
             this.target.timeShift = undefined;
         }
-     // this.targetBlur1();  
-      this.targetBlur(); 
+
+
+     
+     this.targetBlur1();  
+
+
+
+      this.targetBlur();
+        var elements = document.getElementsByClassName("graph-legend-alias pointer");
+        var list_el=_.map(elements,function(x){
+          var str=x.innerHTML;
+          console.log("innerhmtl",str);
+          console.log("str.includes('timeshift')",str.includes('timeshift'));
+          if (str.includes("timeshift")) {
+            var new_str=str.replace('timeshift','<i class="fa fa-clock-o"></i>');
+            console.log("strrr",new_str);   
+            x.innerHTML=new_str;
+            console.log(" x.innerHTML", x.innerHTML);
+
+          }
+
+
+
+        });
+
+        console.log("elementss",elements);
+
+        
+
     }; 
 
 
@@ -761,7 +788,7 @@ export class DruidQueryCtrl extends QueryCtrl {
       //  this.addTimeShiftMode = false;
         this.target.timeShift = undefined;
         this.targetBlur();
-       // this.targetBlur1();
+        this.targetBlur1();
     };
 
     isValidFilterType(type) {
@@ -945,34 +972,12 @@ export class DruidQueryCtrl extends QueryCtrl {
             "type": null
         };
       
-        console.log("checkObj",checkObj);
+        // console.log("checkObj",checkObj);
         if (!_.isEmpty(operand.object) && !_.isEmpty(operand.property)) {
         
-           // if (operand.object.type=="Identifier" && operand.property.type=="Identifier" ) {
                 output.type = "constant";
                 output['value'] = 1;
-             /* var foundTarget=lodash_1.default.find(this.panelCtrl.panel.targets,function(x){
-                  return x.refId==operand.object.name;
-
-              })
-           console.log("foundTarget",foundTarget);
-           
-            
-            if (lodash_1.default.find(foundTarget.aggregators, function (entry) {
-                return entry.name == operand.property.name && entry.type == "hyperUnique";
-            }))  output.type = "constant"; //output.type = "hyperUniqueCardinality";else output.type = "fieldAccess";  
-            output['name'] = //operand.property.name;
-            output['fieldName'] = operand.property.name;
-            console.log("output",output);
-            this.target.toBeAddAggr=lodash_1.default.find(foundTarget.aggregators, function (entry) {
-                return entry.name == operand.property.name ;
-            });
-            //this.target.dummyRefId=this.target.refId;
-            //console.log("this.toBeAddAggr refID",this.refId);
-            
-            //this.target.aggregators.push(aggr);*/
-            
- //           }    
+              
         } else  if (operand.type == "Identifier") {
             if (_.find(this.target.aggregators, function (entry) {
                 return entry.name == operand.name && entry.type == "hyperUnique";
@@ -989,25 +994,20 @@ export class DruidQueryCtrl extends QueryCtrl {
             }
 
 
-            console.log("operand.operator",operand.operator);
         } else if (operand.type == "Literal" ) {
             output.type = "constant";
            
-            // output['value'] = 1;
            if (checkObj) output['value'] = 1;
            else  output['value'] = operand.value;
-           // console.log("output['value']",output['value']);
         } else output = this.translateToDruid(operand,"name",checkObj);
 
         
-      //  console.log("parse_treeeeeeeeeeee",parse_tree);
-      //  console.log('findObjectKey(parse_tree,"object")',this.findObjectKey(parse_tree,"object"));
      
         return   output;
     };
 
     // TODO: set target.currentPostAggregator.errors
-    translateToDruid(parse_tree, name,check_obj?:boolean) {
+    translateToDruid(parse_tree, name, check_obj?:boolean) {
         if (typeof check_obj == "undefined") check_obj=false;
 
                  

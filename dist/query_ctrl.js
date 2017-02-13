@@ -1088,7 +1088,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     var parse_tree = jsep_1.default(this.target.currentPostAggregator.expression);
                     var check_obj = false;
                     if (!lodash_1.default.isEmpty(this.findObjectKey(parse_tree, "object"))) check_obj = true;
-                    this.target.currentPostAggregator.druidQuery = this.translateToDruid(parse_tree, this.target.currentPostAggregator.name);
+                    this.target.currentPostAggregator.druidQuery = this.translateToDruid(parse_tree, this.target.currentPostAggregator.name, check_obj);
                     this.target.errors = this.validateTarget();
                     if (!this.target.errors.currentPostAggregator) {
                         //Add new post aggregator to the list
@@ -1159,7 +1159,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     // console.log("this.panelCtrl 2",this.panelCtrl.datasource.name);
                     //var curPrePostAgg=this.target.currentPrePostAggName;
                     var curPrePostAgg = this.target.currentPrePostAggID;
-                    console.log('curPrePostAgg', curPrePostAgg);
+                    // console.log('curPrePostAgg',curPrePostAgg);
                     var jsonFile_Parsed = this.readTextFile_ajax(this.jsonFile);
                     var found_PrePostAgg;
                     found_PrePostAgg = lodash_1.default.find(jsonFile_Parsed[this.target.druidDS].postaggregations, function (x) {
@@ -1177,7 +1177,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                         }
                         if (!found) tmp_aggs.push(x);
                     });
-                    console.log("found_prepostagg", found_PrePostAgg);
+                    // console.log("found_prepostagg",found_PrePostAgg);
                     var keys_list = Object.keys(found_PrePostAgg);
                     var postAgg = {};
                     keys_list.forEach(function (x) {
@@ -1228,8 +1228,8 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     this.targetBlur1();
                 };
                 DruidQueryCtrl.prototype.targetBlur1 = function () {
-                    console.log("this.target.aggregators1;", this.target.aggregators1);
-                    console.log("this.target.postAggregators1", this.target.postAggregators1);
+                    //  console.log("this.target.aggregators1;",this.target.aggregators1);
+                    //  console.log("this.target.postAggregators1",this.target.postAggregators1);
                     this.jsonFile_Parsed = this.readTextFile_ajax(this.jsonFile);
                     if (!lodash_1.default.isEmpty(this.target.druidDS)) {
                         if (this.jsonFile_Parsed.hasOwnProperty(this.target.druidDS)) {
@@ -1241,7 +1241,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     if (this.target.druidDS) {
                         var postAggs = this.jsonFile_Parsed[this.target.druidDS].postaggregations;
-                        console.log(" postAggsggggggggg", postAggs);
+                        //  console.log(" postAggsggggggggg", postAggs )
                         var postAggsSub = [];
                         postAggs.forEach(function (x, idx) {
                             var tmp_obj = new Object();
@@ -1270,7 +1270,6 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                                 }
                             });
                         });
-                        console.log("this.target.postAggregators1;", this.target.postAggregators1);
                     }
                     // this.errors = this.validateTarget1();
                     this.refresh();
@@ -1280,15 +1279,28 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     if (!this.target.timeShift) {
                         this.target.timeShift = undefined;
                     }
-                    // this.targetBlur1();  
+                    this.targetBlur1();
                     this.targetBlur();
+                    var elements = document.getElementsByClassName("graph-legend-alias pointer");
+                    var list_el = lodash_1.default.map(elements, function (x) {
+                        var str = x.innerHTML;
+                        console.log("innerhmtl", str);
+                        console.log("str.includes('timeshift')", str.includes('timeshift'));
+                        if (str.includes("timeshift")) {
+                            var new_str = str.replace('timeshift', '<i class="fa fa-clock-o"></i>');
+                            console.log("strrr", new_str);
+                            x.innerHTML = new_str;
+                            console.log(" x.innerHTML", x.innerHTML);
+                        }
+                    });
+                    console.log("elementss", elements);
                 };
                 ;
                 DruidQueryCtrl.prototype.clearTimeShift = function () {
                     //  this.addTimeShiftMode = false;
                     this.target.timeShift = undefined;
                     this.targetBlur();
-                    // this.targetBlur1();
+                    this.targetBlur1();
                 };
                 ;
                 DruidQueryCtrl.prototype.isValidFilterType = function (type) {
@@ -1451,9 +1463,8 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     output = {
                         "type": null
                     };
-                    console.log("checkObj", checkObj);
+                    // console.log("checkObj",checkObj);
                     if (!lodash_1.default.isEmpty(operand.object) && !lodash_1.default.isEmpty(operand.property)) {
-                        // if (operand.object.type=="Identifier" && operand.property.type=="Identifier" ) {
                         output.type = "constant";
                         output['value'] = 1;
                     } else if (operand.type == "Identifier") {
@@ -1467,14 +1478,10 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                             output['name'] = operand.name;
                             output['fieldName'] = operand.name;
                         }
-                        console.log("operand.operator", operand.operator);
                     } else if (operand.type == "Literal") {
                         output.type = "constant";
-                        // output['value'] = 1;
                         if (checkObj) output['value'] = 1;else output['value'] = operand.value;
                     } else output = this.translateToDruid(operand, "name", checkObj);
-                    //  console.log("parse_treeeeeeeeeeee",parse_tree);
-                    //  console.log('findObjectKey(parse_tree,"object")',this.findObjectKey(parse_tree,"object"));
                     return output;
                 };
                 ;

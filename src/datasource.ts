@@ -22,6 +22,7 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
 import jsep from 'jsep';
+import $ from 'jquery';
 
 export class DruidDatasource {
   type:string;
@@ -111,8 +112,101 @@ export class DruidDatasource {
     })
   }
 
+
+private crossPostAggsCalculator(res:any)  {
+
+      res.forEach( function(x) {
+          if (x.datapoints.length==0) throw "no datapoint exists in this range. Change the range";
+          if (!_.isEmpty(x.refAgg)) {
+              var tmp_str=x.expression;
+              var y_list:any={};
+              var k_list:any={};
+              var i=0;                                     
+              var trgAgg=[];
+              var j=0;
+              var currAgg=[];
+    
+              x.refAgg.forEach(function(s){
+                var found=false;
+                res.forEach(function(y,idy){
+                  if (x.datapoints.length!=y.datapoints.length) throw "datasources don't have the same number of datapoints or the same granularity";
+              
+                  if (y.refId==Object.keys(s)[0] && y.target==s[Object.keys(s)[0]] ) {
+                    
+                      
+                      var trg_agg=Object.keys(s)[0]+"."+s[Object.keys(s)[0]];
+                      trgAgg[i]="trgAgg_"+i;
+                      //tmp_str=tmp_str.replace(new RegExp(trg_agg,"g"),trgAgg[i]);
+                      tmp_str=tmp_str.replace(trg_agg,trgAgg[i]);
+                      y_list[trgAgg[i]]=idy;
+                      i++;
+                      found=true;
+                   
+                  }
+                 
+
+                });
+               if (!found) throw Object.keys(s)[0]+"."+s[Object.keys(s)[0]]+" does not exist";
+              });
+
+
+
+              
+              
+              x.refKey.forEach( function (m){
+                var found=false;  
+                res.forEach(function (k,idk) {
+                  if (x.datapoints.length!=k.datapoints.length) throw "datasources don't have the same number of datapoints or the same granularity";
+
+                  if ( k.refId==x.refId && k.target==m ) {
+                   
+                        currAgg[j]="currAgg_"+j;
+
+                        tmp_str=tmp_str.replace(m ,currAgg[j]);
+                        k_list[currAgg[j]]=idk
+                        j++;
+                        found=true;
+
+                    }
+                 
+                  });
+                 if (!found) throw "Aggregation "+m+" does not exist";
+              }) ;  
+            
+                             
+          
+           
+              x.datapoints.forEach(function (z,idz){
+               
+                 for (var prop1 in k_list) {
+                  window[prop1]=res[k_list[prop1]].datapoints[idz][0];
+
+                 }
+                 for (var prop2 in y_list) {
+                  window[prop2]=res[y_list[prop2]].datapoints[idz][0];
+
+                 }
+                  
+                var corr = eval(tmp_str);
+                  //console.log("corrr",corr); 
+                z[0]=corr;  
+
+              });
+       
+      //  console.log("tmp_str",tmp_str);
+      //  console.log("k_list",k_list);
+      //  console.log("y_list",y_list);
+
+          }
+      });
+
+  };
+
+
+
   // Called once per panel (graph)
   query(options) {
+
       var dataSource = this;
    
       console.log("Do query");
@@ -178,64 +272,10 @@ export class DruidDatasource {
       return dataSource.q.all(promises).then(function (results) {
 
         var tmp_res = _.flatten(results);
-        // console.log("tmp_res",tmp_res);
-        tmp_res.forEach( function(x) {
+       // console.log("tmp_res",tmp_res);
+      
 
-            if (!_.isEmpty(x.refAgg)) {
-                var found=false;
-                tmp_res.forEach(function(y){
-                  
-                    if (y.refId==Object.keys(x.refAgg)[0] ) {
-                      if (y.target==x.refAgg[Object.keys(x.refAgg)[0]] ) {
-                        if (x.datapoints.length!=y.datapoints.length) throw "datasources don't have same granularity";
-                        var tmp_str=x.expression;
-                        var trg_agg=Object.keys(x.refAgg)[0]+"."+x.refAgg[Object.keys(x.refAgg)[0]];
-                        
-                        var new_str=tmp_str.replace(new RegExp(trg_agg,"g"),"trgAgg");
-                        //console.log("new_str",new_str);
-                        if  (x.refKey) new_str=new_str.replace(new RegExp(x.refKey,"g") ,"curr");
-
-                        
-                        tmp_res.forEach(function (k) {
-                          if ( k.refId==x.refId) {
-                              
-                            if (!x.refKey || k.target==x.refKey ) {
-                           
-                              if (x.datapoints.length==0) throw "no datapoint exists in this range. Change the range";
-                              
-                              x.datapoints.forEach(function (z,idz,array){
-                                
-                                if (!x.refKey) {
-                                  var trgAgg=y.datapoints[idz][0];
-                                  var corr = eval(new_str);
-                                  z[0]=corr;
-                                  found=true;
-                                }else  if (k.target==x.refKey) {
-                                  var curr= k.datapoints[idz][0];
-                                  var trgAgg=y.datapoints[idz][0];
-                                  var corr = eval(new_str);
-                                  z[0]=corr;
-                                  found=true;
-                                  
-
-                                }
-                             });
-                           }
-                          }
-                        });
-          
-                      }
-            
-                  } 
-                 
-                });
-
-                if (!found) throw Object.keys(x.refAgg)[0]+"."+x.refAgg[Object.keys(x.refAgg)[0]]+" does not exist";
-
-            }
-
-        });
-        //console.log(".flatten(refId_MetricNames)",_.flatten(refId_MetricNames));
+        dataSource.crossPostAggsCalculator(tmp_res);
 
         var tmp_res1=_.filter(tmp_res,function(x){
                  
@@ -250,21 +290,12 @@ export class DruidDatasource {
 
          });
 
-
-        tmp_res1.forEach(function(x) {
-                if  (x.timeShift) x.target=x.target+"_"+x.timeShift+"_shift";
-                x.datapoints.forEach(function (y){
-                  var date=DruidDatasource.dateToMoment(new Date(y[1]), false);
-                    
-                  dataSource._timeShiftFromTo(x,"forth",date);
-                  if (x.timeShift) y[1]=date.valueOf();
-
-                });
-
-        });
-       // console.log("tmp_res",tmp_res);
-      return {data: tmp_res1};
+        dataSource._applyTimeShiftToData(tmp_res1);
+   
+        return {data: tmp_res1};
     });
+
+
   }
 
   _doQuery(from, to, granularity, target) {
@@ -275,20 +306,18 @@ export class DruidDatasource {
     //target.postAggregators=target.postAggregators||[];
     var aggregators= this._merge(target.aggregators,target.aggregators1);
     var postAggregators = this._merge(target.postAggregators,target.postAggregators1);
-  //  target.postAggregators=target.postAggregators||[];
-   //var postAggregators=target.postAggregators;
-    for (var i=0;i<postAggregators.length;i++) {
+
+
+   for (var i=0;i<postAggregators.length;i++) {
 
       var parse_tree:any; 
       parse_tree=jsep(postAggregators[i].expression);
       
-     //console.log("parse_tree",parse_tree);
-      var  keys:any=[],refid:any={};
+      var  keys:any=[],refid:any=[];
       this._parseObjectKeys(parse_tree,"name",keys,refid)
 
-      //console.log("keys",keys);
       postAggregators[i]["refId"]=refid;
-     postAggregators[i]["refKey"]=keys;
+      postAggregators[i]["refKey"]=keys;
 
   };
 
@@ -503,22 +532,28 @@ export class DruidDatasource {
 
 
   }
-   _parseObjectKeys (obj,name,keys,refid) {
-    for (var prop in obj) {
-      if (prop=="object" ) refid[obj.object.name]=obj.property.name;
-      else if (prop=="property" ) continue;
-      else {var sub = obj[prop];
-               // console.log("prop[name]",prop);
-      if (prop==name) {
-          keys.push(obj[name]);
-        } 
+  
+   
+    _parseObjectKeys (obj,name,keys,refid) {
+      for (var prop in obj) {
+        if (prop=="object" ) {
+          var tmp:any={};
+          tmp[obj.object.name]=obj.property.name;
+          refid.push(tmp);
       }
-      if ( typeof(sub) == "object") {
-        this._parseObjectKeys(sub,name,keys,refid);
+        //  refid[obj.object.name]=obj.property.name;
+        else if (prop=="property" ) continue;
+        else {var sub = obj[prop];
+                 // console.log("prop[name]",prop);
+        if (prop==name) {
+            keys.push(obj[name]);
+          } 
+        }
+        if ( typeof(sub) == "object") {
+          this._parseObjectKeys(sub,name,keys,refid);
+        }
       }
-    }
-  }  
-        
+   }      
 
 
   _parseTimeShift(target){
@@ -566,7 +601,28 @@ export class DruidDatasource {
            
     }
 
+  _applyTimeShiftToData(res:any) {
+    var self = this;
+    res.forEach(function(x,idx) {
+         
+              if  (x.timeShift) {
+                var str="&#9716;"
+                str=$("<div/>").html(str).text();
+               // x.target=x.target+'<span style="color:#4d79ff">'+" ("+str+"-"+x.timeShift+")" +"</span>";
+                x.target=  x.target+ " ("+str+"-"+x.timeShift+")";
+              }
+            
 
+              x.datapoints.forEach(function (y){
+                var date=DruidDatasource.dateToMoment(new Date(y[1]), false);
+                  
+                self._timeShiftFromTo(x,"forth",date);
+                if (x.timeShift) y[1]=date.valueOf();
+
+              });
+
+        });
+  }
 
   static buildColumns(columns) {
     return columns.join(", ");
@@ -646,25 +702,22 @@ export class DruidDatasource {
     return moment(ts).format('X') * 1000;
   }
 
-  static convertTimeSeriesData (md, metrics,trg) {
+  static convertTimeSeriesData (md, metrics, trg) {
   
       return metrics.map(function (metric) {
         var postagg:any={};
-        var ref_agg,exp,refkey;
+        var ref_agg,exp,refkey:any=[];
         trg.postAggregators=trg.postAggregators||[];
         trg.postAggregators1=trg.postAggregators1||[];
-        //console.log("trg.postAggregators,trg.postAggregators1",trg.postAggregators,trg.postAggregators);
         var combined_postaggs=trg.postAggregators.concat(trg.postAggregators1);
-       // console.log("combined_postaggs",combined_postaggs);
         if (postagg=_.find(combined_postaggs,function(x) {
           return x.name==metric;
         }) ) {
            ref_agg=postagg.refId;
            exp= postagg.expression;
-          if (postagg.refKey)  if (postagg.refKey.length==1) refkey=postagg.refKey[0];
+          if (postagg.refKey) refkey=postagg.refKey; //if (postagg.refKey.length==1) refkey=postagg.refKey[0];
         }
          
-        //console.log("refId",trg.refId,trg.timeShift,ref_agg,refkey,exp);
         return {
           target: metric,
           timeShift:trg.timeShift,
