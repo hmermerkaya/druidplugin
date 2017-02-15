@@ -1,5 +1,24 @@
 {
       "igwcdrv1": {
+
+        "lookups":[
+          {
+            "type":"lookup",
+            "dimension":"RELEASEPARTY",
+            "outputName":"release_party",
+            "name": "release_party"
+
+          },
+          {
+            "type":"lookup",
+            "dimension":"TERMINATIONCODE ",
+            "outputName":"termination_code",
+            "name": "termination_code"
+
+          }
+
+
+        ],
         "postaggregations": [
           {
             "id": "ds_1_postagg_1", 

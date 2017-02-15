@@ -896,9 +896,10 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                     });
                     return dataSource.q.all(promises).then(function (results) {
                         var tmp_res = lodash_1.default.flatten(results);
-                        // console.log("tmp_res",tmp_res);
+                        //console.log("tmp_res",tmp_res);
                         dataSource.crossPostAggsCalculator(tmp_res);
                         var tmp_res1 = lodash_1.default.filter(tmp_res, function (x) {
+                            if (typeof x.refId == "undefined") return true;
                             for (var i = 0; i < lodash_1.default.flatten(refId_MetricNames).length; i++) {
                                 var tmp = {};
                                 tmp[x.refId] = x.target;
@@ -906,6 +907,7 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                             }
                             return false;
                         });
+                        // console.log("tmp_res1",tmp_res1);
                         dataSource._applyTimeShiftToData(tmp_res1);
                         return { data: tmp_res1 };
                     });
@@ -1031,12 +1033,13 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                     return this._druidQuery(query);
                 };
                 DruidDatasource.prototype._topNQuery = function (datasource, intervals, granularity, filters, aggregators, postAggregators, threshold, metric, dimension) {
+                    var dim = { "dimension": dimension };
                     var query = {
                         "queryType": "topN",
                         "dataSource": datasource,
                         "granularity": granularity,
                         "threshold": threshold,
-                        "dimension": dimension,
+                        "dimension": dim,
                         "metric": metric,
                         // "metric": {type: "inverted", metric: metric},
                         "aggregations": aggregators,
@@ -1298,6 +1301,7 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                      the metrics correctly.
                      */
                     //Get the list of all distinct dimension values for the entire result set
+                    //Get the list of all distinct dimension values for the entire result set
                     var dVals = md.reduce(function (dValsSoFar, tsItem) {
                         var dValsForTs = lodash_1.default.map(tsItem.result, dimension);
                         return lodash_1.default.union(dValsSoFar, dValsForTs);
@@ -1349,7 +1353,7 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                          the _.assign() callback will get called for every new val
                          that we add to the final object.
                          */
-                        return lodash_1.default.assign(prev, curr, function (pVal, cVal) {
+                        return lodash_1.default.assignWith(prev, curr, function (pVal, cVal) {
                             if (pVal) {
                                 pVal.push(cVal);
                                 return pVal;
@@ -1392,7 +1396,7 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', 'jsep', 'jquery'
                          the _.assign() callback will get called for every new val
                          that we add to the final object.
                          */
-                        return lodash_1.default.assign(prev, curr, function (pVal, cVal) {
+                        return lodash_1.default.assignWith(prev, curr, function (pVal, cVal) {
                             if (pVal) {
                                 pVal.push(cVal);
                                 return pVal;

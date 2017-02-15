@@ -272,13 +272,13 @@ private crossPostAggsCalculator(res:any)  {
       return dataSource.q.all(promises).then(function (results) {
 
         var tmp_res = _.flatten(results);
-       // console.log("tmp_res",tmp_res);
+        //console.log("tmp_res",tmp_res);
       
 
         dataSource.crossPostAggsCalculator(tmp_res);
-
+        
         var tmp_res1=_.filter(tmp_res,function(x){
-                 
+                if (typeof x.refId == "undefined") return true;
                 for (var i =0;i< _.flatten(refId_MetricNames).length;i++) {
                       var tmp:any={};
                       tmp[x.refId]=x.target;
@@ -290,6 +290,7 @@ private crossPostAggsCalculator(res:any)  {
 
          });
 
+       // console.log("tmp_res1",tmp_res1);
         dataSource._applyTimeShiftToData(tmp_res1);
    
         return {data: tmp_res1};
@@ -440,12 +441,13 @@ private crossPostAggsCalculator(res:any)  {
 
   _topNQuery(datasource, intervals, granularity, filters, aggregators, postAggregators,
              threshold, metric, dimension) {
+    var dim:any={"dimension": dimension};
     var query = {
       "queryType": "topN",
       "dataSource": datasource,
       "granularity": granularity,
       "threshold": threshold,
-      "dimension": dimension,
+      "dimension": dim,//dimension,
       "metric": metric,
       // "metric": {type: "inverted", metric: metric},
       "aggregations": aggregators,
@@ -771,6 +773,7 @@ private crossPostAggsCalculator(res:any)  {
      */
 
     //Get the list of all distinct dimension values for the entire result set
+     //Get the list of all distinct dimension values for the entire result set
     var dVals = md.reduce(function (dValsSoFar, tsItem) {
       var dValsForTs = _.map(tsItem.result, dimension);
       return _.union(dValsSoFar, dValsForTs);
@@ -791,6 +794,7 @@ private crossPostAggsCalculator(res:any)  {
 
     //Re-index the results by dimension value instead of time interval
     var mergedData = md.map(function (item) {
+
       /*
        This first map() transforms this into a list of objects
        where the keys are dimension values
@@ -812,6 +816,7 @@ private crossPostAggsCalculator(res:any)  {
       var vals = _.map(item.result, metric).map(function (val) {
         return [val, timestamp];
       });
+     
       return _.zipObject(keys, vals);
     })
       .reduce(function (prev, curr) {
@@ -825,7 +830,7 @@ private crossPostAggsCalculator(res:any)  {
          the _.assign() callback will get called for every new val
          that we add to the final object.
          */
-        return _.assign(prev, curr, function (pVal, cVal) {
+        return _.assignWith(prev, curr, function (pVal, cVal) {
           if (pVal) {
             pVal.push(cVal);
             return pVal;
@@ -837,7 +842,9 @@ private crossPostAggsCalculator(res:any)  {
     //Convert object keyed by dimension values into an array
     //of objects {target: <dimVal>, datapoints: <metric time series>}
     return _.map(mergedData, function (vals, key) {
+     
       return {
+
         target: key,
         datapoints: vals
       };
@@ -845,6 +852,7 @@ private crossPostAggsCalculator(res:any)  {
   }
 
   convertGroupByData(md, groupBy, metrics) {
+
     var mergedData = md.map(function (item) {
       /*
        The first map() transforms the list Druid events into a list of objects
@@ -861,6 +869,7 @@ private crossPostAggsCalculator(res:any)  {
           DruidDatasource.formatTimestamp(item.timestamp)
         ];
       });
+     
       return _.zipObject(keys, vals);
     })
       .reduce(function (prev, curr) {
@@ -874,7 +883,7 @@ private crossPostAggsCalculator(res:any)  {
          the _.assign() callback will get called for every new val
          that we add to the final object.
          */
-        return _.assign(prev, curr, function (pVal, cVal) {
+        return _.assignWith(prev, curr, function (pVal, cVal) {
           if (pVal) {
             pVal.push(cVal);
             return pVal;
