@@ -2,22 +2,102 @@
       "igwcdrv1": {
 
         "lookups":[
-          {
-            "type":"lookup",
+
+          { 
+            "type": "extraction",
             "dimension":"RELEASEPARTY",
-            "outputName":"release_party",
-            "name": "release_party"
+             "extractionFn": {
+                "type" : "cascade",
+                "extractionFns" : [
+                 { 
+                "type" : "javascript", 
+                "function" : "function(str) {return str.trim() }" 
+                 },
 
-          },
-          {
-            "type":"lookup",
-            "dimension":"TERMINATIONCODE ",
-            "outputName":"termination_code",
-            "name": "termination_code"
-
+                {
+                "type":"registeredLookup",
+                "lookup":"release_party",
+                "retainMissingValue":true
+           
+                }
+              ]
           }
+         } ,
 
 
+          { 
+            "type": "extraction",
+            "dimension":"TERMINATIONCODE",
+             "extractionFn": {
+                "type" : "cascade",
+                "extractionFns" : [
+                 { 
+                "type" : "javascript", 
+                "function" : "function(str) {return str.trim() }" 
+                 },
+
+                {
+                "type":"registeredLookup",
+                "lookup":"termination_code",
+                "retainMissingValue":true
+           
+                }
+              ]
+          }
+         } ,
+
+         {  
+            "type": "extraction",
+            "dimension":"CAUSE_VALUE",
+             "extractionFn": {
+                "type" : "cascade",
+                "extractionFns" : [
+                 { 
+                "type" : "javascript", 
+                "function" : "function(str) {return str.trim() }" 
+                 },
+
+                {
+                "type":"registeredLookup",
+                "lookup":"cause_value",
+                "retainMissingValue":true
+           
+                }
+              ]
+          }
+         } ,
+
+        {  
+          "type": "extraction",
+            "dimension":"DESTINATION_CODE",
+             "extractionFn": {
+                "type" : "cascade",
+                "extractionFns" : [
+                 { 
+                "type" : "javascript", 
+                "function" : "function(str) {return str.trim() }" 
+                 },
+
+                {
+                "type":"registeredLookup",
+                "lookup":"destination_code",
+                "retainMissingValue":true
+           
+                }
+              ]
+          }
+         } ,
+
+        {  
+          "type": "extraction",
+            "dimension":"COUNTRY",
+             "extractionFn": {
+                "type" : "javascript", 
+                "function" : "function(str) {return str.trim() }" 
+             
+             }
+         } 
+         
         ],
         "postaggregations": [
           {

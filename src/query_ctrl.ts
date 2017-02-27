@@ -7,10 +7,14 @@ import {QueryCtrl} from 'app/plugins/sdk';
 import jsep from 'jsep';
 import $ from 'jquery';
 
+
+
 export class DruidQueryCtrl extends QueryCtrl {
     static templateUrl = 'partials/query.editor.html';
     errors:any;
     addFilterMode:boolean;
+    addFilterMode1:boolean;
+    filteron:boolean;
     addAggregatorMode:boolean;
     addAggregatorMode1:boolean;
     addPostAggregatorMode:boolean;
@@ -27,19 +31,31 @@ export class DruidQueryCtrl extends QueryCtrl {
     postAggregatorTypes:any;
     arithmeticPostAggregator:any;
     customGranularity:any;
+    jsonFileParsed:any;
+    
 
     queryTypeValidators = {
         "SQL": this.validateSql.bind(this),
         "timeseries": _.noop.bind(this),
         "groupBy": this.validateGroupByQuery.bind(this),
         "topN": this.validateTopNQuery.bind(this),
+        "topNJoin":this.validateTopNJoinQuery.bind(this),
         "select": this.validateSelectQuery.bind(this)
     };
     filterValidators = {
         "selector": this.validateSelectorFilter.bind(this),
         "regex": this.validateRegexFilter.bind(this),
-        "javascript": this.validateJavascriptFilter.bind(this)
+        "javascript": this.validateJavascriptFilter.bind(this),
+        "in": this.validateInFilter.bind(this),
     };
+
+    filterValidators1 = {
+        "selector": this.validateSelectorFilter1.bind(this),
+        "regex": this.validateRegexFilter1.bind(this),
+        "javascript": this.validateJavascriptFilter1.bind(this),
+        "in": this.validateInFilter1.bind(this),
+    };
+
     aggregatorValidators = {
         "count": this.validateCountAggregator,
         "longSum": _.partial(this.validateSimpleAggregator, 'longSum').bind(this),
@@ -71,18 +87,20 @@ export class DruidQueryCtrl extends QueryCtrl {
     defaultAggregatorType = "count";
     defaultPostAggregator = {type: 'arithmetic', 'fn': '+', 'druiqQuery': null};
     customGranularities = ['minute', 'five_minute', 'fifteen_minute', 'thirty_minute', 'hour', 'day', 'all'];
-    defaultCustomGranularity = 'minute';
+    defaultCustomGranularity = 'hour';
     defaultSelectDimension = "";
     defaultSelectMetric = "";
     defaultLimit = 5;
     jsonFile= '/public/plugins/hmermerkaya-druid-datasource/'+this.panelCtrl.datasource.name+".json";
-    jsonFile_Parsed:any;
+  
     /** @ngInject **/
     constructor($scope, $injector, $q) {
         super($scope, $injector);
         if (!this.target.queryType) {
             this.target.queryType = this.defaultQueryType;
         }
+
+        this.jsonFileParsed=this.readTextFile_ajax(this.jsonFile);
 
         this.queryTypes = _.keys(this.queryTypeValidators);
         this.filterTypes = _.keys(this.filterValidators);
@@ -123,6 +141,10 @@ export class DruidQueryCtrl extends QueryCtrl {
             this.target.customGranularity = this.defaultCustomGranularity;
         }
 
+         if (!this.target.customGranularity1) {
+            this.target.customGranularity1 = this.defaultCustomGranularity;
+        }
+
         if (!this.target.limit) {
             this.target.limit = this.defaultLimit;
         }
@@ -156,6 +178,7 @@ export class DruidQueryCtrl extends QueryCtrl {
         //this.$on('typeahead-updated', function() {
         //  $timeout(this.targetBlur);
         //});
+          console.log("this.panelCtrl",this.panelCtrl);
     }
 
     readTextFile_ajax (file) {
@@ -230,9 +253,154 @@ export class DruidQueryCtrl extends QueryCtrl {
     }
 
     targetBlur() {
+        var self=this;
+       if (self.target.druidDS) {
+         var jsonFileParsed=self.readTextFile_ajax(self.jsonFile);
+       
+         self.target.lookups= jsonFileParsed[self.target.druidDS].lookups;
+       }
         this.errors = this.validateTarget();
         this.refresh();
     }
+
+
+    addValueToValuesInFilter(){
+
+        var self=this;
+
+
+        this.target.currentFilter.valuesArr=this.target.currentFilter.valuesArr||[];
+             
+       // console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+       
+        if ( !_.find(this.target.currentFilter.valuesArr,function(x){
+            
+            return x==self.target.currentFilter.value;
+
+
+
+        }) && this.target.currentFilter.value!="" && this.target.currentFilter.value!=null) {
+            this.target.currentFilter.valuesArr.push(this.target.currentFilter.value);  
+
+            this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+            delete this.target.currentFilter.value;
+        }
+
+    }
+    updateValuesInFilter(){
+        // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+
+        // console.log("this.target.currentFilter.values",this.target.currentFilter.values);
+        if (this.target.currentFilter.values=="" || typeof this.target.currentFilter.values=="undefined") this.target.currentFilter.valuesArr=[];
+        else {
+             try {
+                   this.target.currentFilter.valuesArr=JSON.parse(this.target.currentFilter.values);
+
+                } catch(e) {
+                   // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                    alert(e); 
+                }
+               
+        }
+
+
+    }
+
+    clearAllValuesInFilter(){
+
+      
+        delete this.target.currentFilter.valuesArr;
+        delete this.target.currentFilter.values;
+    }
+
+
+    clearValueInFilter(){
+          
+        var self=this;
+       _.remove(this.target.currentFilter.valuesArr, function(x) {
+
+            return x==self.target.currentFilter.value;
+
+
+         });
+       //console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+      delete this.target.currentFilter.value;
+      if (this.target.currentFilter.valuesArr.length==0) delete this.target.currentFilter.values;
+      else this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+
+    }
+
+
+
+
+
+    addValueToValuesInFilter1(){
+
+        var self=this;
+
+
+        this.target.currentFilter1.valuesArr=this.target.currentFilter1.valuesArr||[];
+             
+       // console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+       
+        if ( !_.find(this.target.currentFilter1.valuesArr,function(x){
+            
+            return x==self.target.currentFilter1.value;
+
+
+
+        }) && this.target.currentFilter1.value!="" && this.target.currentFilter1.value!=null) {
+            this.target.currentFilter1.valuesArr.push(this.target.currentFilter1.value);  
+
+            this.target.currentFilter1.values=JSON.stringify(this.target.currentFilter1.valuesArr);
+            delete this.target.currentFilter1.value;
+        }
+
+    }
+    updateValuesInFilter1(){
+        // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+
+        // console.log("this.target.currentFilter.values",this.target.currentFilter.values);
+        if (this.target.currentFilter1.values=="" || typeof this.target.currentFilter1.values=="undefined") this.target.currentFilter.valuesArr=[];
+        else {
+             try {
+                   this.target.currentFilter1.valuesArr=JSON.parse(this.target.currentFilter1.values);
+
+                } catch(e) {
+                   // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                    alert(e); 
+                }
+               
+        }
+
+
+    }
+
+    clearAllValuesInFilter1(){
+
+      
+        delete this.target.currentFilter1.valuesArr;
+        delete this.target.currentFilter1.values;
+    }
+
+
+    clearValueInFilter1(){
+          
+        var self=this;
+       _.remove(this.target.currentFilter1.valuesArr, function(x) {
+
+            return x==self.target.currentFilter1.value;
+
+
+         });
+       //console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+      delete this.target.currentFilter1.value;
+      if (this.target.currentFilter1.valuesArr.length==0) delete this.target.currentFilter1.values;
+      else this.target.currentFilter1.values=JSON.stringify(this.target.currentFilter1.valuesArr);
+
+    }
+
+
 
     // ------  filter  -----------
     addFilter() {
@@ -247,8 +415,12 @@ export class DruidQueryCtrl extends QueryCtrl {
         }
 
         this.target.errors = this.validateTarget();
+       
         if (!this.target.errors.currentFilter) {
+           if (this.target.currentFilter.type=="in") delete this.target.currentFilter.value;
             //Add new filter to the list
+            // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+           // delete this.target.currentFilter.valuesArr;
             this.target.filters.push(this.target.currentFilter);
             this.clearCurrentFilter();
             this.addFilterMode = false;
@@ -273,6 +445,53 @@ export class DruidQueryCtrl extends QueryCtrl {
         this.addFilterMode = false;
         this.targetBlur();
     }
+
+
+    addFilter1() {
+        console.log("addFilterMode1",this.addFilterMode1);
+        if (!this.addFilterMode1) {
+            //Enabling this mode will display the filter inputs
+            this.addFilterMode1 = true;
+            return;
+        }
+
+        if (!this.target.filters1) {
+            this.target.filters1 = [];
+        }
+
+        this.target.errors = this.validateTarget();
+        //console.log("this.target.errors.currentFilter1",this.target.errors.currentFilter1);
+        if ( this.target.filters.length==0) {alert("Fill the Filter Set 1 first"); throw ' ';}
+        if (!this.target.errors.currentFilter1  ) {
+           if (this.target.currentFilter1.type=="in") delete this.target.currentFilter1.value;
+            //Add new filter to the list
+            // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+           // delete this.target.currentFilter.valuesArr;
+            this.target.filters1.push(this.target.currentFilter1);
+            this.clearCurrentFilter1();
+            this.addFilterMode1 = false;
+        }
+
+        this.targetBlur();
+    }
+
+    editFilter1(index) {
+        this.addFilterMode1 = true;
+        var delFilter = this.target.filters1.splice(index, 1);
+        this.target.currentFilter1 = delFilter[0];
+    }
+
+    removeFilter1(index) {
+        this.target.filters1.splice(index, 1);
+        this.targetBlur();
+    }
+
+    clearCurrentFilter1() {
+        this.target.currentFilter1 = {type: this.defaultFilterType};
+        this.addFilterMode1 = false;
+        this.targetBlur();
+    }
+
 
     // ------ dimension -------------------
     addSelectDimensions() {
@@ -512,22 +731,15 @@ export class DruidQueryCtrl extends QueryCtrl {
 
     addPredefinedPostAggregator() {
                   
-        // console.log("target.PrepostaggsJson", this.target.prePostAggsJSON);
-       // console.log("target.PrepostaggsName", this.target.prePostAggsNames);
-       //  console.log("target.currentPrePostAggName", this.target.currentPrePostAggName);
-       // console.log(this.target.prePostAggsJSON[this.target.druidDS].postaggregations);
-
-       //console.log("this.panelCtrl 1",this);
-      // console.log("this.panelCtrl 2",this.panelCtrl.datasource.name);
-
+      
       //var curPrePostAgg=this.target.currentPrePostAggName;
           var curPrePostAgg=this.target.currentPrePostAggID;
          // console.log('curPrePostAgg',curPrePostAgg);
          
-          var jsonFile_Parsed= this.readTextFile_ajax(this.jsonFile);
+          var jsonFileParsed= this.readTextFile_ajax(this.jsonFile);
 
           var found_PrePostAgg ;
-          found_PrePostAgg=_.find(jsonFile_Parsed[this.target.druidDS].postaggregations, function (x) {
+          found_PrePostAgg=_.find(jsonFileParsed[this.target.druidDS].postaggregations, function (x) {
               return x.id == curPrePostAgg;
             //  return x.name == curPrePostAgg;
           })
@@ -578,7 +790,6 @@ export class DruidQueryCtrl extends QueryCtrl {
 
          if (!this.target.postAggregators1) this.target.postAggregators1=[];
           var postAggs=this.target.postAggregators1;
-         
 
           var found=false
           this.target.postAggregators1.forEach(function(x){
@@ -656,11 +867,11 @@ export class DruidQueryCtrl extends QueryCtrl {
       
       //  console.log("this.target.aggregators1;",this.target.aggregators1);
       //  console.log("this.target.postAggregators1",this.target.postAggregators1);
-        this.jsonFile_Parsed=this.readTextFile_ajax(this.jsonFile);
+        this.jsonFileParsed=this.readTextFile_ajax(this.jsonFile);
 
         if (!_.isEmpty(this.target.druidDS)) {
-            if (this.jsonFile_Parsed.hasOwnProperty(this.target.druidDS) ) {
-                this.target.prePostAggsIDs = _.map(this.jsonFile_Parsed[this.target.druidDS].postaggregations,function(val){
+            if (this.jsonFileParsed.hasOwnProperty(this.target.druidDS) ) {
+                this.target.prePostAggsIDs = _.map(this.jsonFileParsed[this.target.druidDS].postaggregations,function(val){
                  return val.id;  
                   //  return val.name;
                   });
@@ -671,7 +882,7 @@ export class DruidQueryCtrl extends QueryCtrl {
      
        
         if (this.target.druidDS) {
-        var postAggs=this.jsonFile_Parsed[this.target.druidDS].postaggregations;
+        var postAggs=this.jsonFileParsed[this.target.druidDS].postaggregations;
         
       //  console.log(" postAggsggggggggg", postAggs )
         var postAggsSub=[];
@@ -758,25 +969,8 @@ export class DruidQueryCtrl extends QueryCtrl {
 
 
 
-      this.targetBlur();
-        var elements = document.getElementsByClassName("graph-legend-alias pointer");
-        var list_el=_.map(elements,function(x){
-          var str=x.innerHTML;
-          console.log("innerhmtl",str);
-          console.log("str.includes('timeshift')",str.includes('timeshift'));
-          if (str.includes("timeshift")) {
-            var new_str=str.replace('timeshift','<i class="fa fa-clock-o"></i>');
-            console.log("strrr",new_str);   
-            x.innerHTML=new_str;
-            console.log(" x.innerHTML", x.innerHTML);
-
-          }
-
-
-
-        });
-
-        console.log("elementss",elements);
+     this.targetBlur();
+        
 
         
 
@@ -793,6 +987,10 @@ export class DruidQueryCtrl extends QueryCtrl {
 
     isValidFilterType(type) {
         return _.has(this.filterValidators, type);
+    }
+
+    isValidFilterType1(type) {
+        return _.has(this.filterValidators1, type);
     }
 
     isValidAggregatorType(type) {
@@ -874,6 +1072,27 @@ export class DruidQueryCtrl extends QueryCtrl {
         return true;
     }
 
+
+    validateTopNJoinQuery(target,errs) {
+
+      if (!target.dimension) {
+            errs.dimension = "Must specify a dimension";
+            return false;
+        }
+        if (!target.druidMetric) {
+            errs.druidMetric = "Must specify a metric";
+            return false;
+        }
+        console.log(this, this.validateLimit);
+        if (!this.validateLimit(target, errs)) {
+            return false;
+        }
+        return true;  
+
+
+    }
+
+
     validateSelectQuery(target, errs) {
         if (!target.selectThreshold && target.selectThreshold <= 0) {
             errs.selectThreshold = "Must specify a positive number";
@@ -903,6 +1122,17 @@ export class DruidQueryCtrl extends QueryCtrl {
         return null;
     }
 
+   validateInFilter(target) {
+        if (!target.currentFilter.dimension) {
+            return "Must provide dimension name for 'in' filter.";
+        }
+        if (!target.currentFilter.valuesArr || (target.currentFilter.valuesArr && target.currentFilter.valuesArr.length==0)) {
+            return "Must provide  values for 'in' filter.";
+        }
+        return null;
+    }
+
+
     validateRegexFilter(target) {
         if (!target.currentFilter.dimension) {
             return "Must provide dimension name for regex filter.";
@@ -912,6 +1142,59 @@ export class DruidQueryCtrl extends QueryCtrl {
         }
         return null;
     }
+
+
+
+
+
+
+    validateSelectorFilter1(target) {
+        if (!target.currentFilter1.dimension) {
+            return "Must provide dimension name for selector filter.";
+        }
+        if (!target.currentFilter1.value) {
+            // TODO Empty string is how you match null or empty in Druid
+            return "Must provide dimension value for selector filter.";
+        }
+        return null;
+    }
+
+    validateJavascriptFilter1(target) {
+        if (!target.currentFilter1.dimension) {
+            return "Must provide dimension name for javascript filter.";
+        }
+        if (!target.currentFilter1["function"]) {
+            return "Must provide func value for javascript filter.";
+        }
+        return null;
+    }
+
+   validateInFilter1(target) {
+        if (!target.currentFilter1.dimension) {
+            return "Must provide dimension name for 'in' filter.";
+        }
+        if (!target.currentFilter1.valuesArr || (target.currentFilter1.valuesArr && target.currentFilter1.valuesArr.length==0)) {
+            return "Must provide  values for 'in' filter.";
+        }
+        return null;
+    }
+
+
+    validateRegexFilter1(target) {
+        if (!target.currentFilter1.dimension) {
+            return "Must provide dimension name for regex filter.";
+        }
+        if (!target.currentFilter1.pattern) {
+            return "Must provide pattern for regex filter.";
+        }
+        return null;
+    }
+
+
+
+
+
+
 
     validateCountAggregator(target) {
         if (!target.currentAggregator.name) {
@@ -983,15 +1266,15 @@ export class DruidQueryCtrl extends QueryCtrl {
                 return entry.name == operand.name && entry.type == "hyperUnique";
             })) output.type = "hyperUniqueCardinality";else output.type = "fieldAccess";
            
-            if (checkObj){   
-              output.type = "constant";
-              output['value'] = 1;
-            } else {
+            // if (checkObj){   
+            //   output.type = "constant";
+            //   output['value'] = 1;
+            // } else {
 
               output['name'] = operand.name;
               output['fieldName'] = operand.name;
 
-            }
+          //  }
 
 
         } else if (operand.type == "Literal" ) {
@@ -1073,6 +1356,19 @@ export class DruidQueryCtrl extends QueryCtrl {
                 }
             }
         }
+
+        if (this.addFilterMode1) {
+            if (!this.isValidFilterType1(this.target.currentFilter1.type)) {
+                errs.currentFilter1 = "Invalid filter type: " + this.target.currentFilter1.type + ".";
+            } else {
+                validatorOut = this.filterValidators1[this.target.currentFilter1.type](this.target);
+                if (validatorOut) {
+                    errs.currentFilter1 = validatorOut;
+                }
+            }
+        }
+
+
 
         if (this.addAggregatorMode) {
             if (!this.isValidAggregatorType(this.target.currentAggregator.type)) {

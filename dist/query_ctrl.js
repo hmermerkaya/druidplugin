@@ -752,12 +752,20 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                         "timeseries": lodash_1.default.noop.bind(this),
                         "groupBy": this.validateGroupByQuery.bind(this),
                         "topN": this.validateTopNQuery.bind(this),
+                        "topNJoin": this.validateTopNJoinQuery.bind(this),
                         "select": this.validateSelectQuery.bind(this)
                     };
                     this.filterValidators = {
                         "selector": this.validateSelectorFilter.bind(this),
                         "regex": this.validateRegexFilter.bind(this),
-                        "javascript": this.validateJavascriptFilter.bind(this)
+                        "javascript": this.validateJavascriptFilter.bind(this),
+                        "in": this.validateInFilter.bind(this)
+                    };
+                    this.filterValidators1 = {
+                        "selector": this.validateSelectorFilter1.bind(this),
+                        "regex": this.validateRegexFilter1.bind(this),
+                        "javascript": this.validateJavascriptFilter1.bind(this),
+                        "in": this.validateInFilter1.bind(this)
                     };
                     this.aggregatorValidators = {
                         "count": this.validateCountAggregator,
@@ -787,7 +795,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     this.defaultAggregatorType = "count";
                     this.defaultPostAggregator = { type: 'arithmetic', 'fn': '+', 'druiqQuery': null };
                     this.customGranularities = ['minute', 'five_minute', 'fifteen_minute', 'thirty_minute', 'hour', 'day', 'all'];
-                    this.defaultCustomGranularity = 'minute';
+                    this.defaultCustomGranularity = 'hour';
                     this.defaultSelectDimension = "";
                     this.defaultSelectMetric = "";
                     this.defaultLimit = 5;
@@ -795,6 +803,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     if (!this.target.queryType) {
                         this.target.queryType = this.defaultQueryType;
                     }
+                    this.jsonFileParsed = this.readTextFile_ajax(this.jsonFile);
                     this.queryTypes = lodash_1.default.keys(this.queryTypeValidators);
                     this.filterTypes = lodash_1.default.keys(this.filterValidators);
                     this.aggregatorTypes = lodash_1.default.keys(this.aggregatorValidators);
@@ -825,6 +834,9 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     if (!this.target.customGranularity) {
                         this.target.customGranularity = this.defaultCustomGranularity;
                     }
+                    if (!this.target.customGranularity1) {
+                        this.target.customGranularity1 = this.defaultCustomGranularity;
+                    }
                     if (!this.target.limit) {
                         this.target.limit = this.defaultLimit;
                     }
@@ -849,6 +861,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     //this.$on('typeahead-updated', function() {
                     //  $timeout(this.targetBlur);
                     //});
+                    console.log("this.panelCtrl", this.panelCtrl);
                 }
                 DruidQueryCtrl.prototype.readTextFile_ajax = function (file) {
                     var json = null;
@@ -914,8 +927,87 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                 };
                 DruidQueryCtrl.prototype.targetBlur = function () {
+                    var self = this;
+                    if (self.target.druidDS) {
+                        var jsonFileParsed = self.readTextFile_ajax(self.jsonFile);
+                        self.target.lookups = jsonFileParsed[self.target.druidDS].lookups;
+                    }
                     this.errors = this.validateTarget();
                     this.refresh();
+                };
+                DruidQueryCtrl.prototype.addValueToValuesInFilter = function () {
+                    var self = this;
+                    this.target.currentFilter.valuesArr = this.target.currentFilter.valuesArr || [];
+                    // console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+                    if (!lodash_1.default.find(this.target.currentFilter.valuesArr, function (x) {
+                        return x == self.target.currentFilter.value;
+                    }) && this.target.currentFilter.value != "" && this.target.currentFilter.value != null) {
+                        this.target.currentFilter.valuesArr.push(this.target.currentFilter.value);
+                        this.target.currentFilter.values = JSON.stringify(this.target.currentFilter.valuesArr);
+                        delete this.target.currentFilter.value;
+                    }
+                };
+                DruidQueryCtrl.prototype.updateValuesInFilter = function () {
+                    // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                    // console.log("this.target.currentFilter.values",this.target.currentFilter.values);
+                    if (this.target.currentFilter.values == "" || typeof this.target.currentFilter.values == "undefined") this.target.currentFilter.valuesArr = [];else {
+                        try {
+                            this.target.currentFilter.valuesArr = JSON.parse(this.target.currentFilter.values);
+                        } catch (e) {
+                            // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                            alert(e);
+                        }
+                    }
+                };
+                DruidQueryCtrl.prototype.clearAllValuesInFilter = function () {
+                    delete this.target.currentFilter.valuesArr;
+                    delete this.target.currentFilter.values;
+                };
+                DruidQueryCtrl.prototype.clearValueInFilter = function () {
+                    var self = this;
+                    lodash_1.default.remove(this.target.currentFilter.valuesArr, function (x) {
+                        return x == self.target.currentFilter.value;
+                    });
+                    //console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+                    delete this.target.currentFilter.value;
+                    if (this.target.currentFilter.valuesArr.length == 0) delete this.target.currentFilter.values;else this.target.currentFilter.values = JSON.stringify(this.target.currentFilter.valuesArr);
+                };
+                DruidQueryCtrl.prototype.addValueToValuesInFilter1 = function () {
+                    var self = this;
+                    this.target.currentFilter1.valuesArr = this.target.currentFilter1.valuesArr || [];
+                    // console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+                    if (!lodash_1.default.find(this.target.currentFilter1.valuesArr, function (x) {
+                        return x == self.target.currentFilter1.value;
+                    }) && this.target.currentFilter1.value != "" && this.target.currentFilter1.value != null) {
+                        this.target.currentFilter1.valuesArr.push(this.target.currentFilter1.value);
+                        this.target.currentFilter1.values = JSON.stringify(this.target.currentFilter1.valuesArr);
+                        delete this.target.currentFilter1.value;
+                    }
+                };
+                DruidQueryCtrl.prototype.updateValuesInFilter1 = function () {
+                    // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                    // console.log("this.target.currentFilter.values",this.target.currentFilter.values);
+                    if (this.target.currentFilter1.values == "" || typeof this.target.currentFilter1.values == "undefined") this.target.currentFilter.valuesArr = [];else {
+                        try {
+                            this.target.currentFilter1.valuesArr = JSON.parse(this.target.currentFilter1.values);
+                        } catch (e) {
+                            // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                            alert(e);
+                        }
+                    }
+                };
+                DruidQueryCtrl.prototype.clearAllValuesInFilter1 = function () {
+                    delete this.target.currentFilter1.valuesArr;
+                    delete this.target.currentFilter1.values;
+                };
+                DruidQueryCtrl.prototype.clearValueInFilter1 = function () {
+                    var self = this;
+                    lodash_1.default.remove(this.target.currentFilter1.valuesArr, function (x) {
+                        return x == self.target.currentFilter1.value;
+                    });
+                    //console.log("this.target.currentFilter.valuesArr",this.target.currentFilter.valuesArr);
+                    delete this.target.currentFilter1.value;
+                    if (this.target.currentFilter1.valuesArr.length == 0) delete this.target.currentFilter1.values;else this.target.currentFilter1.values = JSON.stringify(this.target.currentFilter1.valuesArr);
                 };
                 // ------  filter  -----------
                 DruidQueryCtrl.prototype.addFilter = function () {
@@ -929,7 +1021,10 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     this.target.errors = this.validateTarget();
                     if (!this.target.errors.currentFilter) {
+                        if (this.target.currentFilter.type == "in") delete this.target.currentFilter.value;
                         //Add new filter to the list
+                        // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                        // delete this.target.currentFilter.valuesArr;
                         this.target.filters.push(this.target.currentFilter);
                         this.clearCurrentFilter();
                         this.addFilterMode = false;
@@ -948,6 +1043,47 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                 DruidQueryCtrl.prototype.clearCurrentFilter = function () {
                     this.target.currentFilter = { type: this.defaultFilterType };
                     this.addFilterMode = false;
+                    this.targetBlur();
+                };
+                DruidQueryCtrl.prototype.addFilter1 = function () {
+                    console.log("addFilterMode1", this.addFilterMode1);
+                    if (!this.addFilterMode1) {
+                        //Enabling this mode will display the filter inputs
+                        this.addFilterMode1 = true;
+                        return;
+                    }
+                    if (!this.target.filters1) {
+                        this.target.filters1 = [];
+                    }
+                    this.target.errors = this.validateTarget();
+                    //console.log("this.target.errors.currentFilter1",this.target.errors.currentFilter1);
+                    if (this.target.filters.length == 0) {
+                        alert("Fill the Filter Set 1 first");
+                        throw ' ';
+                    }
+                    if (!this.target.errors.currentFilter1) {
+                        if (this.target.currentFilter1.type == "in") delete this.target.currentFilter1.value;
+                        //Add new filter to the list
+                        // this.target.currentFilter.values=JSON.stringify(this.target.currentFilter.valuesArr);
+                        // delete this.target.currentFilter.valuesArr;
+                        this.target.filters1.push(this.target.currentFilter1);
+                        this.clearCurrentFilter1();
+                        this.addFilterMode1 = false;
+                    }
+                    this.targetBlur();
+                };
+                DruidQueryCtrl.prototype.editFilter1 = function (index) {
+                    this.addFilterMode1 = true;
+                    var delFilter = this.target.filters1.splice(index, 1);
+                    this.target.currentFilter1 = delFilter[0];
+                };
+                DruidQueryCtrl.prototype.removeFilter1 = function (index) {
+                    this.target.filters1.splice(index, 1);
+                    this.targetBlur();
+                };
+                DruidQueryCtrl.prototype.clearCurrentFilter1 = function () {
+                    this.target.currentFilter1 = { type: this.defaultFilterType };
+                    this.addFilterMode1 = false;
                     this.targetBlur();
                 };
                 // ------ dimension -------------------
@@ -1151,18 +1287,12 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                 };
                          */
                 DruidQueryCtrl.prototype.addPredefinedPostAggregator = function () {
-                    // console.log("target.PrepostaggsJson", this.target.prePostAggsJSON);
-                    // console.log("target.PrepostaggsName", this.target.prePostAggsNames);
-                    //  console.log("target.currentPrePostAggName", this.target.currentPrePostAggName);
-                    // console.log(this.target.prePostAggsJSON[this.target.druidDS].postaggregations);
-                    //console.log("this.panelCtrl 1",this);
-                    // console.log("this.panelCtrl 2",this.panelCtrl.datasource.name);
                     //var curPrePostAgg=this.target.currentPrePostAggName;
                     var curPrePostAgg = this.target.currentPrePostAggID;
                     // console.log('curPrePostAgg',curPrePostAgg);
-                    var jsonFile_Parsed = this.readTextFile_ajax(this.jsonFile);
+                    var jsonFileParsed = this.readTextFile_ajax(this.jsonFile);
                     var found_PrePostAgg;
-                    found_PrePostAgg = lodash_1.default.find(jsonFile_Parsed[this.target.druidDS].postaggregations, function (x) {
+                    found_PrePostAgg = lodash_1.default.find(jsonFileParsed[this.target.druidDS].postaggregations, function (x) {
                         return x.id == curPrePostAgg;
                         //  return x.name == curPrePostAgg;
                     });
@@ -1230,17 +1360,17 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                 DruidQueryCtrl.prototype.targetBlur1 = function () {
                     //  console.log("this.target.aggregators1;",this.target.aggregators1);
                     //  console.log("this.target.postAggregators1",this.target.postAggregators1);
-                    this.jsonFile_Parsed = this.readTextFile_ajax(this.jsonFile);
+                    this.jsonFileParsed = this.readTextFile_ajax(this.jsonFile);
                     if (!lodash_1.default.isEmpty(this.target.druidDS)) {
-                        if (this.jsonFile_Parsed.hasOwnProperty(this.target.druidDS)) {
-                            this.target.prePostAggsIDs = lodash_1.default.map(this.jsonFile_Parsed[this.target.druidDS].postaggregations, function (val) {
+                        if (this.jsonFileParsed.hasOwnProperty(this.target.druidDS)) {
+                            this.target.prePostAggsIDs = lodash_1.default.map(this.jsonFileParsed[this.target.druidDS].postaggregations, function (val) {
                                 return val.id;
                                 //  return val.name;
                             });
                         }
                     }
                     if (this.target.druidDS) {
-                        var postAggs = this.jsonFile_Parsed[this.target.druidDS].postaggregations;
+                        var postAggs = this.jsonFileParsed[this.target.druidDS].postaggregations;
                         //  console.log(" postAggsggggggggg", postAggs )
                         var postAggsSub = [];
                         postAggs.forEach(function (x, idx) {
@@ -1281,19 +1411,6 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     this.targetBlur1();
                     this.targetBlur();
-                    var elements = document.getElementsByClassName("graph-legend-alias pointer");
-                    var list_el = lodash_1.default.map(elements, function (x) {
-                        var str = x.innerHTML;
-                        console.log("innerhmtl", str);
-                        console.log("str.includes('timeshift')", str.includes('timeshift'));
-                        if (str.includes("timeshift")) {
-                            var new_str = str.replace('timeshift', '<i class="fa fa-clock-o"></i>');
-                            console.log("strrr", new_str);
-                            x.innerHTML = new_str;
-                            console.log(" x.innerHTML", x.innerHTML);
-                        }
-                    });
-                    console.log("elementss", elements);
                 };
                 ;
                 DruidQueryCtrl.prototype.clearTimeShift = function () {
@@ -1305,6 +1422,9 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                 ;
                 DruidQueryCtrl.prototype.isValidFilterType = function (type) {
                     return lodash_1.default.has(this.filterValidators, type);
+                };
+                DruidQueryCtrl.prototype.isValidFilterType1 = function (type) {
+                    return lodash_1.default.has(this.filterValidators1, type);
                 };
                 DruidQueryCtrl.prototype.isValidAggregatorType = function (type) {
                     return lodash_1.default.has(this.aggregatorValidators, type);
@@ -1376,6 +1496,21 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     return true;
                 };
+                DruidQueryCtrl.prototype.validateTopNJoinQuery = function (target, errs) {
+                    if (!target.dimension) {
+                        errs.dimension = "Must specify a dimension";
+                        return false;
+                    }
+                    if (!target.druidMetric) {
+                        errs.druidMetric = "Must specify a metric";
+                        return false;
+                    }
+                    console.log(this, this.validateLimit);
+                    if (!this.validateLimit(target, errs)) {
+                        return false;
+                    }
+                    return true;
+                };
                 DruidQueryCtrl.prototype.validateSelectQuery = function (target, errs) {
                     if (!target.selectThreshold && target.selectThreshold <= 0) {
                         errs.selectThreshold = "Must specify a positive number";
@@ -1402,11 +1537,57 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     return null;
                 };
+                DruidQueryCtrl.prototype.validateInFilter = function (target) {
+                    if (!target.currentFilter.dimension) {
+                        return "Must provide dimension name for 'in' filter.";
+                    }
+                    if (!target.currentFilter.valuesArr || target.currentFilter.valuesArr && target.currentFilter.valuesArr.length == 0) {
+                        return "Must provide  values for 'in' filter.";
+                    }
+                    return null;
+                };
                 DruidQueryCtrl.prototype.validateRegexFilter = function (target) {
                     if (!target.currentFilter.dimension) {
                         return "Must provide dimension name for regex filter.";
                     }
                     if (!target.currentFilter.pattern) {
+                        return "Must provide pattern for regex filter.";
+                    }
+                    return null;
+                };
+                DruidQueryCtrl.prototype.validateSelectorFilter1 = function (target) {
+                    if (!target.currentFilter1.dimension) {
+                        return "Must provide dimension name for selector filter.";
+                    }
+                    if (!target.currentFilter1.value) {
+                        // TODO Empty string is how you match null or empty in Druid
+                        return "Must provide dimension value for selector filter.";
+                    }
+                    return null;
+                };
+                DruidQueryCtrl.prototype.validateJavascriptFilter1 = function (target) {
+                    if (!target.currentFilter1.dimension) {
+                        return "Must provide dimension name for javascript filter.";
+                    }
+                    if (!target.currentFilter1["function"]) {
+                        return "Must provide func value for javascript filter.";
+                    }
+                    return null;
+                };
+                DruidQueryCtrl.prototype.validateInFilter1 = function (target) {
+                    if (!target.currentFilter1.dimension) {
+                        return "Must provide dimension name for 'in' filter.";
+                    }
+                    if (!target.currentFilter1.valuesArr || target.currentFilter1.valuesArr && target.currentFilter1.valuesArr.length == 0) {
+                        return "Must provide  values for 'in' filter.";
+                    }
+                    return null;
+                };
+                DruidQueryCtrl.prototype.validateRegexFilter1 = function (target) {
+                    if (!target.currentFilter1.dimension) {
+                        return "Must provide dimension name for regex filter.";
+                    }
+                    if (!target.currentFilter1.pattern) {
                         return "Must provide pattern for regex filter.";
                     }
                     return null;
@@ -1471,13 +1652,12 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                         if (lodash_1.default.find(this.target.aggregators, function (entry) {
                             return entry.name == operand.name && entry.type == "hyperUnique";
                         })) output.type = "hyperUniqueCardinality";else output.type = "fieldAccess";
-                        if (checkObj) {
-                            output.type = "constant";
-                            output['value'] = 1;
-                        } else {
-                            output['name'] = operand.name;
-                            output['fieldName'] = operand.name;
-                        }
+                        // if (checkObj){   
+                        //   output.type = "constant";
+                        //   output['value'] = 1;
+                        // } else {
+                        output['name'] = operand.name;
+                        output['fieldName'] = operand.name;
                     } else if (operand.type == "Literal") {
                         output.type = "constant";
                         if (checkObj) output['value'] = 1;else output['value'] = operand.value;
@@ -1539,6 +1719,16 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                             validatorOut = this.filterValidators[this.target.currentFilter.type](this.target);
                             if (validatorOut) {
                                 errs.currentFilter = validatorOut;
+                            }
+                        }
+                    }
+                    if (this.addFilterMode1) {
+                        if (!this.isValidFilterType1(this.target.currentFilter1.type)) {
+                            errs.currentFilter1 = "Invalid filter type: " + this.target.currentFilter1.type + ".";
+                        } else {
+                            validatorOut = this.filterValidators1[this.target.currentFilter1.type](this.target);
+                            if (validatorOut) {
+                                errs.currentFilter1 = validatorOut;
                             }
                         }
                     }
