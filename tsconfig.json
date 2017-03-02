@@ -15,6 +15,7 @@
     "src/query_ctrl.ts",
     "src/module.ts",
     "src/config_ctrl.ts",
+    "src/math.d.ts",
     "src/jsep.d.ts"
   ],
   "exclude": [

@@ -46,7 +46,7 @@
         </label>
       </label>
       <input type="text" class="gf-form-input" ng-model="ctrl.target.maxDataPoints" spellcheck='false' placeholder="default" ng-blur="ctrl.targetBlur()">
-      </input>
+    
     </div>
     </div>
 
@@ -57,11 +57,12 @@
 
   <div class="gf-form-inline" ng-switch on="ctrl.target.queryType">
      <div ng-switch-when="timeseries" >
+      {{ctrl.predPostAggs=false;""}}
       {{ctrl.filteron=false;""}}
      </div>
     <div ng-switch-when="topN" class="gf-form max-width-20">
     {{ctrl.filteron=false;""}}
-   
+    {{ctrl.predPostAggs=false;""}}
       <label class="gf-form-label query-keyword width-7">
         Dimension
       </label>
@@ -95,6 +96,7 @@
 
     <div ng-switch-when="topNJoin" class="gf-form max-width-18">
       {{ctrl.filteron=true;""}}
+      {{ctrl.predPostAggs=true;""}}
       <label class="gf-form-label query-keyword width-6">
         Dimension
       </label>
@@ -125,7 +127,7 @@
 
       </div>
 
-      <div ng-switch-when="topNJoin" class="gf-form max-width-25">
+    <!--   <div ng-switch-when="topNJoin" class="gf-form max-width-25">
       <label class="gf-form-label query-keyword width-8">
         Start Time
       </label>
@@ -139,17 +141,17 @@
 
        
 
-     <!--  <div class="gf-form-inline">
+      <div class="gf-form-inline">
         <div class="gf-form gf-form--offset-1">
           <label class="gf-form-label query-keyword width-9">
           Filter Set 1
          </label>
         </div>
-      </div> -->
+      </div>
 
  
 
-    </div>
+    </div> -->
 
    <!--  <div   class="gf-form-input max-width-15 " ng-switch-when="topNJoin" >
     </div> -->
@@ -159,6 +161,7 @@
 
      <div ng-switch-when="topNJoin" class="gf-form-inline" >
         {{ctrl.filteron=true;""}}
+
           <div class="gf-form gf-form--offset-1">
            <!--  <div class="gf-form"> -->
               <label class="gf-form-label query-keyword width-7">
@@ -270,25 +273,33 @@
             </div>
 
 
-            <!-- <div class="gf-form">
-              <label class="gf-form-label query-keyword width-10">
-                  Time Granularity 1
+          
+
+            <gf-form-switch class="gf-form" label="Custom Granularity 1" label-class="query-keyword" checked="ctrl.target.shouldOverrideGranularity" on-change="ctrl.targetBlur()">
+            </gf-form-switch>
+           
+            
+            <div class="gf-form"  ng-hide="!ctrl.target.shouldOverrideGranularity">
+              <div class="gf-form-select-wrapper max-width-15">
+                <select ng-model="ctrl.target.customGranularity" class="gf-form-input" ng-options="granularity for granularity in ctrl.customGranularity" ng-change="ctrl.targetBlur()">
+                </select>
+              </div>
+            </div>
+           
+           
+            <div class="gf-form max-width-20"  ng-hide="ctrl.target.shouldOverrideGranularity">
+              <label class="gf-form-label query-keyword">
+                Max Data Points
+                <label class="gf-form-label" bs-tooltip="ctrl.errors.maxDataPoints" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.maxDataPoints">
+                  <i class="fa fa-warning"></i>
+                </label>
               </label>
+              <input type="text" class="gf-form-input" ng-model="ctrl.target.maxDataPoints" spellcheck='false' placeholder="default" ng-blur="ctrl.targetBlur()">
+            
             </div>
 
 
-            <gf-form-switch class="gf-form" label="Custom Granularity" label-class="query-keyword" checked="ctrl.target.shouldOverrideGranularity" on-change="ctrl.targetBlur()">
-             </gf-form-switch>
-  
-            <div class="gf-form"  >
-              <div class="gf-form-select-wrapper max-width-15">
 
-                <select ng-model="ctrl.target.Granularity" class="gf-form-input" ng-options="granularity for granularity in ctrl.customGranularity" ng-change="ctrl.targetBlur()">
-                </select>
-              </div>
-            </div> -->
-
-           
 
            <!--  <div class="gf-form max-width-20"  ng-hide="ctrl.target.shouldOverrideGranularity">
               <label class="gf-form-label query-keyword">
@@ -302,7 +313,7 @@
             </div> -->
        
          
-         <div class="gf-form max-width-15"   >
+        <!--  <div class="gf-form max-width-15"   >
                 
             <label class="gf-form-label query-keyword width-9">
               Duration 1
@@ -312,7 +323,7 @@
             <input type="text" class="gf-form-input input-medium max-width-8 ng-pristine ng-untouched ng-valid ng-empty " placeholder="1h or 1d" ng-model="ctrl.target.duration"  ng-blur="ctrl.targetBlur()"> 
                     
 
-        </div>
+        </div> -->
 
          <!--  <div class="gf-form gf-form--grow" >
             <div class="gf-form-label gf-form-label--grow"></div>
@@ -475,6 +486,31 @@
                
             </div> -->
 
+
+
+       <gf-form-switch class="gf-form" label="Custom Granularity 2" label-class="query-keyword" checked="ctrl.target.shouldOverrideGranularity" on-change="ctrl.targetBlur()">
+            </gf-form-switch>
+           
+            
+            <div class="gf-form"  ng-hide="!ctrl.target.shouldOverrideGranularity">
+              <div class="gf-form-select-wrapper max-width-15">
+                <select ng-model="ctrl.target.customGranularity1" class="gf-form-input" ng-options="granularity1 for granularity1 in ctrl.customGranularity" ng-change="ctrl.targetBlur()">
+                </select>
+              </div>
+            </div>
+           
+           
+            <div class="gf-form max-width-20"  ng-hide="ctrl.target.shouldOverrideGranularity">
+              <label class="gf-form-label query-keyword">
+                Max Data Points
+                <label class="gf-form-label" bs-tooltip="ctrl.errors.maxDataPoints" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.maxDataPoints">
+                  <i class="fa fa-warning"></i>
+                </label>
+              </label>
+              <input type="text" class="gf-form-input" ng-model="ctrl.target.maxDataPoints" spellcheck='false' placeholder="default" ng-blur="ctrl.targetBlur()">
+            
+            </div>
+    <!--         
       <div class="gf-form max-width-15">
             
         <label class="gf-form-label query-keyword width-9">
@@ -486,12 +522,32 @@
                 
 
       </div>
+ -->
+      <div class="gf-form gf-form--offset-1">
+        <label class="gf-form-label query-keyword width-9">
+            Expression
+          </label>
+        </div>
 
-       
+     <input type="text"  class="gf-form-input input-medium max-width-12" spellcheck="false"  placeholder="100*{{ctrl.target.druidMetric}}1/{{ctrl.target.druidMetric}}2"  ng-model="ctrl.target.topNJoinExpression" ng-blur="ctrl.targetBlur()">
+
      
      
 
     </div>
+
+ <!--  <div ng-switch-when="topNJoin"  class="gf-form-inline">
+    <div class="gf-form gf-form--offset-1">
+        <div class="gf-form">
+          <label class="gf-form-label query-keyword width-9">
+            Expression
+          </label>
+        </div>
+        </div>
+
+     <input type="text"  class="gf-form-input input-medium max-width-15" spellcheck="false" ng-model="ctrl.target.currentPostAggregator.expression" placeholder="expression" ng-blur="ctrl.targetBlur()">
+
+   </div>   -->
     
      
 
@@ -499,7 +555,8 @@
 
 
     <div ng-switch-when="groupBy" class="gf-form max-width-20">
-    {{ctrl.filteron=false;""}}
+      {{ctrl.filteron=false;""}}
+      {{ctrl.predPostAggs=false;""}}
       <label class="gf-form-label query-keyword width-9">
         Group By
       </label>
@@ -608,10 +665,23 @@
         <i class="fa fa-warning"></i>
       </a>
     </div>
+
+
+
    <!--  <div ng-if="ctrl.target.queryType != 'timeseries'" class="gf-form gf-form--grow">
       <div ng-if="ctrl.target.queryType != 'timeseries'" class="gf-form-label gf-form-label--grow"></div>
     </div> -->
+  
+
   </div>
+
+
+
+ 
+ 
+
+
+
 
 
   <div class="gf-form-inline"  ng-hide="ctrl.filteron" >
@@ -864,6 +934,7 @@
     </div>
   </div>
 
+<div ng-hide="ctrl.predPostAggs" >
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">
       PredPostAggs
@@ -1026,6 +1097,10 @@
     </div>
   </div>
   </div> -->
+
+
+  </div>
+
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label query-keyword width-9">

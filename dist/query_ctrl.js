@@ -794,8 +794,8 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     this.defaultFilterType = "selector";
                     this.defaultAggregatorType = "count";
                     this.defaultPostAggregator = { type: 'arithmetic', 'fn': '+', 'druiqQuery': null };
-                    this.customGranularities = ['minute', 'five_minute', 'fifteen_minute', 'thirty_minute', 'hour', 'day', 'all'];
-                    this.defaultCustomGranularity = 'hour';
+                    this.customGranularities = ['minute', 'five_minute', 'fifteen_minute', 'thirty_minute', 'hour', 'day', 'week', 'month', 'quarter', 'year', 'all'];
+                    this.defaultCustomGranularity = 'day';
                     this.defaultSelectDimension = "";
                     this.defaultSelectMetric = "";
                     this.defaultLimit = 5;
@@ -839,6 +839,9 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     if (!this.target.limit) {
                         this.target.limit = this.defaultLimit;
+                    }
+                    if (!this.target.shouldOverrideGranularity) {
+                        this.target.shouldOverrideGranularity = true;
                     }
                     // needs to be defined here as it is called from typeahead
                     this.listDataSources = function (query, callback) {
@@ -930,7 +933,8 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     var self = this;
                     if (self.target.druidDS) {
                         var jsonFileParsed = self.readTextFile_ajax(self.jsonFile);
-                        self.target.lookups = jsonFileParsed[self.target.druidDS].lookups;
+                        delete self.target.lookups;
+                        if (jsonFileParsed) self.target.lookups = jsonFileParsed[self.target.druidDS].lookups;
                     }
                     this.errors = this.validateTarget();
                     this.refresh();
@@ -1382,10 +1386,10 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                             });
                             postAggsSub.push(tmp_obj);
                         });
-                        var clone_postaggs = this.target.postAggregators1;
+                        var clonePostaggs = this.target.postAggregators1 || [];
                         var trans = this.translateToDruid.bind(this);
                         postAggsSub.forEach(function (x) {
-                            clone_postaggs.forEach(function (y, idy) {
+                            clonePostaggs.forEach(function (y, idy) {
                                 if (x.id == y.id) {
                                     if (!lodash_1.default.isEqual(x, y)) {
                                         delete y.druidQuery;
@@ -1449,6 +1453,17 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     }
                     return true;
                 };
+                DruidQueryCtrl.prototype.validateMaxDataPoints1 = function (target, errs) {
+                    if (target.maxDataPoints1) {
+                        var intMax = parseInt(target.maxDataPoints1);
+                        if (isNaN(intMax) || intMax <= 0) {
+                            errs.maxDataPoints1 = "Must be a positive integer";
+                            return false;
+                        }
+                        target.maxDataPoints1 = intMax;
+                    }
+                    return true;
+                };
                 DruidQueryCtrl.prototype.validateLimit = function (target, errs) {
                     if (!target.limit) {
                         errs.limit = "Must specify a limit";
@@ -1509,6 +1524,7 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                     if (!this.validateLimit(target, errs)) {
                         return false;
                     }
+                    // this.target.topNJoinExpression
                     return true;
                 };
                 DruidQueryCtrl.prototype.validateSelectQuery = function (target, errs) {
@@ -1711,6 +1727,17 @@ System.register(['lodash', 'app/plugins/sdk', 'jsep', 'jquery'], function (expor
                         }
                     } else {
                         this.validateMaxDataPoints(this.target, errs);
+                    }
+                    if (this.target.shouldOverrideGranularity) {
+                        if (this.target.customGranularity1) {
+                            if (!lodash_1.default.includes(this.customGranularity, this.target.customGranularity1)) {
+                                errs.customGranularity1 = "Invalid granularity.";
+                            }
+                        } else {
+                            errs.customGranularity1 = "You must choose a granularity.";
+                        }
+                    } else {
+                        this.validateMaxDataPoints1(this.target, errs);
                     }
                     if (this.addFilterMode) {
                         if (!this.isValidFilterType(this.target.currentFilter.type)) {

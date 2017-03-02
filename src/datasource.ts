@@ -22,6 +22,7 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
 import jsep from 'jsep';
+//import   math from 'math';
 import $ from 'jquery';
 
 export class DruidDatasource {
@@ -36,6 +37,8 @@ export class DruidDatasource {
   supportAnnotations:boolean;
   supportMetrics:boolean;
   q:any;
+  durationRegex:any
+
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
@@ -49,6 +52,7 @@ export class DruidDatasource {
     this.q = $q;
     this.backendSrv = backendSrv;
     this.templateSrv = templateSrv;
+    this.durationRegex=/^(-)?P(?:(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?|(\d+)W)$/
   }
 
   replaceTemplateValues(obj:any, attrList:string[]) {
@@ -69,9 +73,13 @@ export class DruidDatasource {
     ['five_minute', moment.duration(5, 'minute'), {"type": "period", "period": "PT5M", "timeZone": "Etc/UTC"}],
     ['fifteen_minute', moment.duration(15, 'minute'), {"type": "period", "period": "PT15M", "timeZone": "Etc/UTC"}],
     ['thirty_minute', moment.duration(30, 'minute'), {"type": "period", "period": "PT30M", "timeZone": "Etc/UTC"}],
-    ['hour', moment.duration(1, 'hour'), {"type": "period", "period": "PT60M", "timeZone": "Etc/UTC"}],
-    ['day', moment.duration(1, 'day'), {"type": "period", "period": "PT1440M", "timeZone": "Etc/UTC"}],
-    ['all', null, 'all']
+    ['hour', moment.duration(1, 'hour'), {"type": "period", "period": "PT1H", "timeZone": "Etc/UTC"}],
+    ['day', moment.duration(1, 'day'), {"type": "period", "period": "P1D", "timeZone": "Etc/UTC"}],
+    ['week',moment.duration(1, 'week'),{"type": "period", "period": "P1W", "timeZone": "Etc/UTC"}],
+    ['month',moment.duration(1, 'month'),{"type": "period", "period": "P1M", "timeZone": "Etc/UTC"}],
+    ['quarter',moment.duration(3, 'month'),{"type": "period", "period": "P3M", "timeZone": "Etc/UTC"}],
+    ['year',moment.duration(1, 'year'),{"type": "period", "period": "P1Y", "timeZone": "Etc/UTC"}],
+    ['all', null, 'all']  
   ];
 
   private filterTemplateExpanders = {
@@ -187,11 +195,12 @@ private crossPostAggsCalculator(res:any)  {
                // console.log("z[0]",z[0]);
            
                  for (var prop1 in k_list) {
-                 
+                // this.crossPostAggsCalculator[prop1]=1;
                   window[prop1]=1;//res[k_list[prop1]].datapoints[idz][0];
 
                  }
                  for (var prop2 in y_list) {
+                 //this.crossPostAggsCalculator[prop2]=res[y_list[prop2]].datapoints[idz][0];
                   window[prop2]=res[y_list[prop2]].datapoints[idz][0];
 
                  }
@@ -381,6 +390,198 @@ private crossPostAggsCalculator(res:any)  {
 
   }*/
 
+  handleTopNJoinData(res){
+
+
+          var parsedExp=null,keys=[];;
+          if (res[0].topNJoinData.expression) {
+              parsedExp=jsep(res[0].topNJoinData.expression);
+              this._parseObjectKeys(parsedExp,"name",keys);
+          }
+         
+          
+      
+
+          var foundVals= keys.reduce(function(a,b){
+               if ( !_.find(a,function(y){
+              return y == b;
+
+            }) && (b.slice(-1)==1 || b.slice(-1)==2 ) ) {    
+                a.push(b);
+               
+               }
+                return a;
+
+          },[])
+          .sort(function(a,b){
+           return  a.slice(-1) > b.slice(-1);
+
+
+          })
+
+       
+         
+         if (foundVals.length!=2    ) throw "there arent two variables or as labeled in placeholder";
+        if (  foundVals[0].slice(0,-1) != res[0].topNJoinData.metric  || foundVals[1].slice(0,-1) != res[0].topNJoinData.metric  )  throw "  Variables are not labeled as defined in placeholder ";
+
+        // console.log("foundVals",foundVals,druidmetric,foundVals[0].slice(0,-1), foundVals[1].slice(0,-1) );
+         //console.log("topNJoinExpression",topNJoinExpression);
+
+
+            var period_list=_.reduce(res,function(pval,cval){
+                      var tmp=Object.keys(cval.topNJoinData.period)[0];
+                 //   var tmp=Object.keys(cval.datapoints[0][2])[0];
+                        if (tmp &&  !_.find(pval,function(x){
+
+                          return tmp==x;
+
+                        }))    { pval.push(tmp)}
+
+                          return pval;
+
+
+            },[]).sort(function(a,b){
+           
+                return  moment.duration(a).valueOf() >  moment.duration(b).valueOf() ;
+
+            })
+
+          //  console.log("period_list",period_list);
+          
+
+
+
+          var filteron0SubResData=[],filteron1SubResData=[];
+
+           if ( period_list.length == 2 && _.find(period_list,function(x){
+               return x=="all";
+
+           })) {
+
+                 filteron0SubResData=_.filter(res,function(x){
+                  return Object.keys(x.topNJoinData.period)[0]==period_list[1];
+               })
+
+                 filteron1SubResData=_.filter(res,function(x){
+                  return Object.keys(x.topNJoinData.period)[0]=="all";
+               })
+
+           }
+
+
+
+
+           else if (period_list.length==1) {
+                filteron0SubResData=_.filter(res,function(x){
+                    return x.topNJoinData.period[Object.keys(x.topNJoinData.period)[0]]==0
+                 });
+                filteron1SubResData=_.filter(res,function(x){
+                     return x.topNJoinData.period[Object.keys(x.topNJoinData.period)[0]]==1
+                 })
+
+
+           } else {
+
+                filteron0SubResData=_.filter(res,function(x){
+                  return Object.keys(x.topNJoinData.period)[0]==period_list[0];
+               })
+
+                filteron1SubResData=_.filter(res,function(x){
+                 return Object.keys(x.topNJoinData.period)[0]==period_list[1]; 
+                })
+
+          }
+        
+           
+       // console.log("filteron0SubResData",filteron0SubResData);
+       //  console.log("filteron1SubResData",filteron1SubResData);
+        var finalResData:any=[];
+        
+        filteron0SubResData.forEach(function(x){
+            
+            filteron1SubResData.forEach(function(y){
+                
+                if (x.target==y.target){
+                        var tmp:any={};
+                         tmp.target=x.target;
+                         tmp.timeShift=x.timeShift;
+                         tmp.datapoints=new Array();
+                         var yPeriod=null,criValue=0;
+                         if (Object.keys(y.topNJoinData.period)[0]=="all")  { yPeriod = Infinity; criValue=-Infinity}
+                         else  yPeriod= moment.duration(Object.keys(y.topNJoinData.period)[0]).valueOf();
+
+                         x.datapoints.forEach(function(z){
+
+                            y.datapoints.forEach(function(k){
+                           
+                      //    console.log("z1,k1",moment(z[1]).format(),moment(k[1]).format());
+
+                        
+                           
+                             //  console.log("z1 ve k1 ",z[1],k[1]); 
+                              if ( moment(z[1]).diff(k[1]) >= criValue &&  moment(z[1]).diff(k[1])<yPeriod) {
+                              
+
+
+                                var sub_tmp=null;
+
+                                window[foundVals[0]]=z[0];
+                                window[foundVals[1]]=k[0];
+
+                                if ( window[foundVals[1]]==null ) sub_tmp=[null, z[1]];
+                                else { if (window[foundVals[0]]==null) sub_tmp=[null, z[1]];
+                                  else {
+                                    
+                                
+                                    window[foundVals[0]]=z[0];
+                                    window[foundVals[1]]=k[0];
+
+                                   // console.log(" window[foundVals[0]]", window[foundVals[0]]);
+                                    var calc=eval(res[0].topNJoinData.expression);
+                                    //sub_tmp=[100*z[0]/k[0], z[1]]
+                                    sub_tmp=[calc, z[1]]
+
+
+                                  }
+                                };
+                               tmp.datapoints.push(sub_tmp);
+                             
+                            }
+
+                          })
+
+
+                    })
+
+                  finalResData.push(tmp);
+
+                  
+          
+
+                }
+
+               
+
+            })
+
+          
+
+        })
+
+
+
+
+
+
+
+
+
+
+  return finalResData;
+
+
+  }
+
 
 
   // Called once per panel (graph)
@@ -391,16 +592,15 @@ private crossPostAggsCalculator(res:any)  {
       console.log("Do query");
       console.log(options);
       var refId_MetricNames=[];
-      var topNJoinLimit=null;
+     // var topNJoinLimit=null;
+     // var topNJoinExpression=null;
+     //  var druidmetric=null;
+      
 
       var promises:any=[];
+      
       for (var j=0;j<options.targets.length;j++){
-       /* console.log("options.range.from",options.range.from.clone());
-        var birthday = new Date('2016-12-13T08:32:47');
-        console.log("birthday",birthday);
-        var moment_birthday= DruidDatasource.dateToMoment(birthday,false);
-        console.log("moment_birthday",moment_birthday);*/
-       
+   
 
 
         if (_.isEmpty(options.targets[j].druidDS) || ( (_.isEmpty(options.targets[j].aggregators) &&  _.isEmpty(options.targets[j].aggregators1) ) && options.targets[j].queryType !== "select") )  {
@@ -428,117 +628,56 @@ private crossPostAggsCalculator(res:any)  {
 
 
     
-     // console.log("options.targets[j].postAggregatorsss",options.targets[j].postAggregators,options.targets[j].postAggregators1);
+     
 
       var maxDataPointsByResolution = options.maxDataPoints;
       var maxDataPointsByConfig = options.targets[j].maxDataPoints ? options.targets[j].maxDataPoints : Number.MAX_VALUE;
       var maxDataPoints = Math.min(maxDataPointsByResolution, maxDataPointsByConfig);
+      console.log("maxDataPoints",maxDataPoints);
+
+      
       var granularity = null;
       var granularity1=null;
+    
       
 
 
-      /* if (options.targets[j].filters.length >=0 ) {
-
-        promises.push(dataSource._doQuery(roundedFrom, to, granularity[2], options.targets[j]));
-
-      }*/
+      
       if (options.targets[j].queryType=="topNJoin") {
-          topNJoinLimit=options.targets[j].limit;
-          /* granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === options.targets[j].customGranularity});
-          granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === options.targets[j].customGranularity1});*/
+         // topNJoinExpression=options.targets[j].topNJoinExpression;
+        //  druidmetric=options.targets[j].druidMetric;
 
-            var myRegexp = /^(\d+|\+\d+)(d|h){1}$/g;
-            var match = myRegexp.exec(options.targets[j].duration);
-            console.log("match",match);
-            if (match!=null) {
-              if (match[2]=="h")  granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "hour"});
-              else if(match[2]=="d") granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "day"});
-              else  throw "the duration is not either in 'h' or 'd'" ;//granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "all"});
-            } else  throw "the duration is not either in 'h' or 'd'"; //granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "all"});
+          var date_from = options.range.from.clone();
+          var date_to = options.range.to.clone();
 
-           
-          var  myRegexp1 = /^(\d+|\+\d+)(d|h){1}$/g;
-           var match1 = myRegexp1.exec(options.targets[j].duration1);
-            if (match1!=null) {
-              if (match1[2]=="h")  granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "hour"});
-              else if (match1[2]=="d") granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "day"});
-              else   throw "the duration is not either in 'h' or 'd'" ;// granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "all"});
-            } else   throw "the duration is not either in 'h' or 'd'" ;//granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === "all"});
+         dataSource._timeShiftFromTo(options.targets[j],"back", date_from,date_to);
 
 
-            console.log("match1",match1);
-           var intervals= options.targets[j].timeInterval.split(',');
-           console.log("intervals",intervals);
-           intervals=intervals.map(function(x){
-            return x.trim();
-           })
+          var from = DruidDatasource.dateToMoment(date_from, false);
+          var to = DruidDatasource.dateToMoment(date_to, true);
 
-           //var interval= options.targets[j].timeInterval;
-         /*   var startTime= options.targets[j].startTime;
-          
-           startTime=startTime.trim();
+        //  console.log("from",from);
+       //   topNJoinLimit=options.targets[j].limit;
+          if (options.targets[j].shouldOverrideGranularity)  granularity = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === options.targets[j].customGranularity});
+          else   granularity = dataSource.computeGranularity(from, to, maxDataPoints);
+           if (options.targets[j].shouldOverrideGranularity)
+          granularity1 = _.find(DruidDatasource.GRANULARITIES, (entry) => { return entry[0] === options.targets[j].customGranularity1});
+          else granularity1 = dataSource.computeGranularity(from, to, maxDataPoints);
+          var roundedFrom = granularity[0] === "all" ? from : dataSource.roundDownStartTime(from, granularity[0]);
+          var roundedFrom1 = granularity1[0] === "all" ? from : dataSource.roundDownStartTime(from, granularity1[0]);
 
-            console.log("intervals",intervals);*/
-          // var fromTopNJoin=new moment(intervals[0]), toTopNJoin= new moment(intervals[1]);
-            var fromTopNJoin=new moment(intervals[0]);
-              var  toTopNJoin= new moment(intervals[0]);
-            //fromTopNJoin=fromTopNJoin.startOf("thirty_minute");
-           fromTopNJoin=dataSource.roundDownStartTime(fromTopNJoin, granularity[0]);
-           // fromTopNJoin=fromTopNJoin.startOf("hour");
-           
-            toTopNJoin=dataSource.roundDownStartTime(toTopNJoin, granularity[0]);
-           // console.log("toTopNJoin",toTopNJoin);
-           // toTopNJoin.add(1,options.targets[j].customGranularity+"s");
-            dataSource.addDuration(toTopNJoin,match[1], match[2]);
-          // fromTopNJoin=DruidDatasource.dateToMoment(fromTopNJoin,false);
-          // toTopNJoin=DruidDatasource.dateToMoment(toTopNJoin,true);
-           console.log("fromTopNJoin",fromTopNJoin);
-           
-           console.log("toTopNJoin",toTopNJoin);
-
-            var fromTopNJoin1=new moment(intervals[0]);
-            //fromTopNJoin=fromTopNJoin.startOf("thirty_minute");
-          // fromTopNJoin1=dataSource.roundDownStartTime(fromTopNJoin1, granularity1[0]);
-
-          
-           
-            var  toTopNJoin1= new moment(intervals[0]);
-            //toTopNJoin1=dataSource.roundDownStartTime(toTopNJoin1, granularity1[0]);
-
-           // toTopNJoin.add(1,options.targets[j].customGranularity+"s");
-           //console.log("options.targets[j].customGranularity1 ",options.targets[j].customGranularity1, match1[1]);
-            dataSource.addDuration(toTopNJoin1,match1[1],match1[2]);
-
-          
-         // fromTopNJoin1=DruidDatasource.dateToMoment(fromTopNJoin1,false);
-
-
-          // toTopNJoin1=DruidDatasource.dateToMoment(toTopNJoin1,true);
-
-          fromTopNJoin1=dataSource.roundDownStartTime(fromTopNJoin1, granularity1[0]);
-           toTopNJoin1=dataSource.roundDownStartTime(toTopNJoin1, granularity1[0]);
-          //fromTopNJoin1=fromTopNJoin1.startOf("day");
-           // fromTopNJoin1.local();toTopNJoin1.local();
-            console.log("fromTopNJoin1",fromTopNJoin1);
-              console.log("toTopNJoin1",toTopNJoin1);
-
-        /*   var  roundedFromIn = granularity[0] === "all" ? fromTopNJoin : dataSource.roundUpStartTime(fromTopNJoin, granularity[0]);
-           var roundedFromIn1 = granularity1[0] === "all" ? fromTopNJoin1 : dataSource.roundUpStartTime(fromTopNJoin1, granularity1[0]);*/
-
-        if ( options.targets[j].filters1.length>0 && options.targets[j].filters.length >0 )  {
+          if ( (options.targets[j].filters1.length>0 && options.targets[j].filters.length >0) || (options.targets[j].filters1.length==0 && options.targets[j].filters.length >0) )  {
           console.log("granularityies",granularity[2],granularity1[2]);
-            promises.push(dataSource._doQuery(fromTopNJoin, toTopNJoin, granularity[2], options.targets[j])) ;
-            promises.push(dataSource._doQuery(fromTopNJoin1, toTopNJoin1, granularity1[2], options.targets[j],true)) ;
+            promises.push(dataSource._doQuery(roundedFrom, to, granularity[2], options.targets[j])) ;
+            promises.push(dataSource._doQuery(roundedFrom1, to, granularity1[2], options.targets[j],true)) ;
 
-          }
-        else throw "Please fill the both filter sections!..";
+          }  else throw "Please fill the first filter section at least!..";
+
       } else { 
 
         var date_from = options.range.from.clone();
         var date_to = options.range.to.clone();
-      //console.log("options.targets[j].timeShift",options.targets[j].timeShift);
-      //console.log("options.targets[j].prePostAgg",options.targets[j].currentPrePostAgg);
+    
         
         dataSource._timeShiftFromTo(options.targets[j],"back", date_from,date_to);
 
@@ -554,7 +693,7 @@ private crossPostAggsCalculator(res:any)  {
 
       //Round up to start of an interval
       //Width of bar chars in Grafana is determined by size of the smallest interval
-        var roundedFrom = granularity[0] === "all" ? from : dataSource.roundUpStartTime(from, granularity[0]);
+        var roundedFrom = granularity[0] === "all" ? from : dataSource.roundDownStartTime(from, granularity[0]);
 
 
 
@@ -639,110 +778,37 @@ private crossPostAggsCalculator(res:any)  {
       });
 */
 
-    //  if ( !this.target.filters1 && target.filters1.length>0) promises[]
+ 
 
 
 
       return dataSource.q.all(promises).then(function (results) {
 
-        var tmp_res = _.flatten(results);
-        console.log("tmp_res",tmp_res);
-        var tmp_res_clone=_.cloneDeep(tmp_res);
-         var newResData:any=[];
-           tmp_res_clone.forEach((x,idx) => {
-              if (x.queryType=="topNJoin") {
-                  console.log("filteron",x.filterOn);
-                  newResData.push(x.datapoints.reduce(function(pval,cval)  { 
-  
-                         
-                  if (pval.datapoints.length==0) { 
-                    pval.datapoints.push(cval);
-                   // console.log("pval1",pval,cval);
-                    return pval;
-                                                 }
-                  else {
-                      pval.datapoints[0][0]=pval.datapoints[0][0]+cval[0];
-                     // console.log("pval2",pval,cval);
-                     return pval;
-                   }
-                     },_.assign(x,{datapoints:[]}))
-
-                  );
-
-
-
-
-              }
-
-
-
-           })
-
-          var filteron0SubResData=_.filter(newResData,function(x){
-            return x.datapoints[0][2]==0;
-          })
-            .sort(function(a,b){
-             return a.datapoints[0][0]<b.datapoints[0][0];
-
-            }).splice(0,topNJoinLimit);
-
-           
-            console.log("filteron0SubResData",filteron0SubResData);
-        var finalResData:any=[];
-        
-        filteron0SubResData.forEach(function(x){
-            
-            newResData.forEach(function(y){
-                 if (y.datapoints[0][2] == 1 ){
-                if (x.target==y.target){
-                  var tmp:any={};
-                  tmp.datapoints=_.cloneDeep(x.datapoints);
-                  //console.log("x.datapoints[0][0] y.datapoints[0][0] ",x.datapoints[0][0],y.datapoints[0][0]);
-                  tmp.datapoints[0][0]=100*x.datapoints[0][0]/y.datapoints[0][0];
-                  tmp.target=x.target;
-                  finalResData.push(tmp);
-                 // console.log("tmp",tmp);
-
-                }
-
-               } 
-
-            })
-
-          
-
+        var res = _.flatten(results);
+       // console.log("resultData",res);
+     
+        var resTopNJoin=_.filter(res, function(x){
+          return x.topNJoinData;
         })
 
+         var resNonTopNJoin=_.filter(res, function(x){
+          return !x.topNJoinData;
+        })
 
-           console.log("newResData",newResData);
-          //  myArray.splice(0).
-            console.log("finalResData",finalResData);
+        res.splice(0);
 
-        if (finalResData.length>0) return {data: finalResData/*.sort(function(a,b){
-             return a.datapoints[0][0]<b.datapoints[0][0];
+        if ( resTopNJoin.length>0 ) {
+          resTopNJoin= dataSource.handleTopNJoinData(resTopNJoin);
+          dataSource._applyTimeShiftToData(resTopNJoin);
+        //  return {data:tmp_res};
 
-            })*/};
-      //  if (newResData.length>0) return {data: newResData};
-        else {
+         }
 
-         /* tmp_res.forEach(function(x){
-            x.datapoints.forEach(function(y){
-
-               return y[0]<b.datapoints[0][0];
-
-            })
-
-
-          })
-*/
-          return {data: tmp_res};
-
-        }
-
-       /* dataSource.crossPostAggsCalculator(tmp_res);
-         console.log("tmp_res",tmp_res);
-        
-        var tmp_res1=_.filter(tmp_res,function(x){
+        if (resNonTopNJoin.length>0){
+          //   console.log("resNonTopNJoin",resNonTopNJoin);
+                dataSource.crossPostAggsCalculator(resNonTopNJoin);
+                
+                var  resNonTopNJoin=_.filter(resNonTopNJoin,function(x){
                 if (typeof x.refId == "undefined") return true;
                 for (var i =0;i< _.flatten(refId_MetricNames).length;i++) {
                       var tmp:any={};
@@ -755,20 +821,34 @@ private crossPostAggsCalculator(res:any)  {
 
          });
 
+            dataSource._applyTimeShiftToData(resNonTopNJoin);
+
+        }
        
-        dataSource._applyTimeShiftToData(tmp_res1);
-       console.log("tmp_res1",tmp_res1);
-        return {data: tmp_res};*/
+
+          return {data: resNonTopNJoin.concat(resTopNJoin)};
+
+      
     });
 
 
   }
 
   _doQuery(from, to, granularity, target, secondFilter?:boolean) {
-   var filterIndex=null;
-    if (typeof secondFilter == "undefined") {secondFilter=false;
-      filterIndex=0;}
-    else  filterIndex=1;
+    
+    var filterIndex=null;
+    if (typeof secondFilter == "undefined") {
+      secondFilter=false;
+      filterIndex=0;
+    } else filterIndex=1;
+     
+   console.log("granularity.period",granularity.period);
+    var period={};
+    if (granularity.period) period[granularity.period] =filterIndex; 
+    else period["all"]=filterIndex;
+
+    console.log("period",period);
+
     console.log("target.filteron",target.filterOn);
 
     var self = this;
@@ -789,7 +869,7 @@ private crossPostAggsCalculator(res:any)  {
       var  keys:any=[],refid:any=[];
       this._parseObjectKeys(parse_tree,"name",keys,refid)
 
-      postAggregators[i]["refId"]=target.fiterOn;
+      postAggregators[i]["refId"]=refid;
       postAggregators[i]["refKey"]=keys;
 
   };
@@ -840,7 +920,8 @@ private crossPostAggsCalculator(res:any)  {
     }
 
     else if (target.queryType === 'topNJoin') {
-      var threshold:any = 9999;//target.limit;
+      var threshold:any = target.limit;
+      if (secondFilter) threshold=99999;
       var metric = target.druidMetric;
       var dimension = target.dimension;
       var lookups:any=[];
@@ -856,7 +937,7 @@ private crossPostAggsCalculator(res:any)  {
       console.log("dimension",dimension);*/
       promise = this._topNJoinQuery(datasource, intervals, granularity, filters, aggregators, postAggregators, threshold, metric, dimension, lookups)
         .then(function (response) {
-          return self.convertTopNData(response.data, dimension, metric, target, filterIndex);
+          return self.convertTopNData(response.data, dimension, metric, target, period);
         });
     }
 
@@ -1037,7 +1118,7 @@ private crossPostAggsCalculator(res:any)  {
     var self=this;
     console.log("lookups",lookups);
     var dim:any={"dimension":dimension};
-
+     console.log("granularity in query",granularity);
     var tmpDim;
     if (tmpDim=_.find(lookups,function(x){
       return  x.dimension==dimension;
@@ -1242,7 +1323,7 @@ private crossPostAggsCalculator(res:any)  {
   }
   
    
-    _parseObjectKeys (obj,name,keys,refid) {
+    _parseObjectKeys (obj,name,keys,refid?) {
       for (var prop in obj) {
         if (prop=="object" ) {
           var tmp:any={};
@@ -1450,9 +1531,9 @@ private crossPostAggsCalculator(res:any)  {
       .join("-");
   }
 
-  convertTopNData(md, dimension, metric, trg, filterIndex?:any) {
+  convertTopNData(md, dimension, metric, trg, period?:any) {
 
-    if (typeof filterIndex =="undefined") filterIndex=0;
+   // if (typeof period =="undefined") ;
   //  console.log("mdfirst ",md);
     /*
      Druid topN results look like this:
@@ -1528,14 +1609,15 @@ private crossPostAggsCalculator(res:any)  {
        ]
        */
       var timestamp = DruidDatasource.formatTimestamp(item.timestamp);
-    // console.log("item result and dimenstion",item.result,dimension);
+
       var keys = _.map(item.result, dimension);
-    //  console.log("keys",keys);
+    
       var vals = _.map(item.result, metric).map(function (val) {
-        return [val, timestamp, filterIndex];
+        if (period) return [val, timestamp];
+        return [val, timestamp];
       });
-     // console.log("vals",vals);
-     //  console.log("_.zipObject(keys, vals)",_.zipObject(keys, vals));
+  
+      // console.log("_.zipObject(keys, vals)",_.zipObject(keys, vals));
       return _.zipObject(keys, vals);
     })
       .reduce(function (prev, curr) {
@@ -1557,7 +1639,7 @@ private crossPostAggsCalculator(res:any)  {
           return [cVal];
           });
       }, {});
-     // console.log("mergedData",mergedData);
+   //   console.log("mergedData",mergedData);
 
     //Convert object keyed by dimension values into an array
     //of objects {target: <dimVal>, datapoints: <metric time series>}
@@ -1582,8 +1664,17 @@ private crossPostAggsCalculator(res:any)  {
            ref_agg=postagg.refId;
            exp= postagg.expression;
           if (postagg.refKey) refkey=postagg.refKey; //if (postagg.refKey.length==1) refkey=postagg.refKey[0];
+        
         }*/
 
+      var  topNJoinData={
+          expression:trg.topNJoinExpression,
+           period:period,
+          metric:metric
+
+      }
+
+if (trg.queryType!="topNJoin") topNJoinData=null;
 
       return {
        /* timeShift:trg.timeShift,
@@ -1591,8 +1682,11 @@ private crossPostAggsCalculator(res:any)  {
         refAgg:ref_agg,
         refKey: refkey,
         expression:exp, */
-       
-        queryType:trg.queryType,
+        timeShift:trg.timeShift,
+        topNJoinData:topNJoinData,
+      //  expression:trg.topNJoinExpression,
+       // period:period,
+      // queryType:trg.queryType,
         target: key,
         datapoints: vals
       };
@@ -1648,7 +1742,6 @@ private crossPostAggsCalculator(res:any)  {
        Second map converts the aggregated object into an array
        */
       return {
-       
         target: key,
         datapoints: vals
       };
@@ -1719,8 +1812,16 @@ roundDownStartTime(from, granularity) {
     var duration = _.find(DruidDatasource.GRANULARITIES, function (gEntry) {
       return gEntry[0] === granularity;
     })[1];
-    var rounded = moment(Math.floor((+from) / (+duration)) * (+duration)).local();
+    var rounded = moment(Math.floor((+from) / (+duration)) * (+duration));
     console.log("Rounding down start time from " + from.format() + " to " + rounded.format() + " for granularity [" + granularity + "]");
+    return rounded;
+  }
+
+
+  roundDownStartTimev2(from, duration) {
+   /**/
+    var rounded = moment(Math.floor((+from) / (+duration)) * (+duration));
+   // console.log("Rounding down start time from " + from.format() + " to " + rounded.format() + " for granularity [" + granularity + "]");
     return rounded;
   }
 /*
@@ -1753,4 +1854,93 @@ roundDownStartTime(from, granularity) {
 
 
   }
+
+convertisoDateTime(str:String ){
+  var tmp = moment.duration(str).asSeconds;
+  if (tmp == 60 ) return "minute";
+  else if (tmp == 60*60) return "hour";
+  else if (tmp == 60*60*24) return "day";
+ else if (tmp == 2592000) return "month";
+ else if (tmp== 31536000) return "year";
+
+
+}
+
+
+
+ checkDate = date => {
+  if (Object.prototype.toString.call(date) !== '[object Date]' || isNaN(date.valueOf()))
+    throw new TypeError('Invalide date')
+}
+
+map = (mapper, object) => {
+  const target = {}
+  for (let key in object)
+    if (object.hasOwnProperty(key))
+      target[key] = mapper(object[key], key, object)
+  return target
+}
+
+
+parseDuration (duration) {
+  let parsed
+
+  if (duration)
+    duration.replace(this.durationRegex, (_, sign, year, month, day, hour, minute, second, week) => {
+      sign = sign ? -1 : 1
+      const toNumber = num => parseInt(num, 10) * sign || 0
+      parsed = this.map(toNumber, { year, month, day, hour, minute, second, week })
+    })
+
+  if (!parsed)
+    throw new Error(`Invalid duration "${duration}"`)
+
+  return Object.assign(parsed, {
+    /**
+     * Sum or substract parsed duration to given date using UTC logic
+     * Time in the day may be affected by daylight saving time (DST)
+     * Time interval between the date given and returned will be stricly equal to duration
+     *
+     * @param {Date} date: Any valid date
+     * @throws {TypeError} When date is not valid
+     * @returns {Date} New date with duration difference
+     */
+    addUTC(date) {
+      this.checkDate(date);
+      return new Date(Date.UTC(
+        date.getUTCFullYear() + parsed.year,
+        date.getUTCMonth() + parsed.month,
+        date.getUTCDate() + parsed.day + parsed.week * 7,
+        date.getUTCHours() + parsed.hour,
+        date.getUTCMinutes() + parsed.minute,
+        date.getUTCSeconds() + parsed.second,
+        date.getUTCMilliseconds()
+      ))
+    },
+
+    /**
+     * Sum or substract parsed duration to date
+     * Time in the day won't be affected by daylight saving time (DST)
+     * Time interval between the date given and returned may be affected by DST and not equal to duration
+     *
+     * @param {Date} date: Any valid date
+     * @throws {TypeError} When date is not valid
+     * @returns {Date} New date with duration difference
+     */
+    add(date) {
+      this.checkDate(date);
+      return new Date(
+        date.getFullYear() + parsed.year,
+        date.getMonth() + parsed.month,
+        date.getDate() + parsed.day + parsed.week * 7,
+        date.getHours() + parsed.hour,
+        date.getMinutes() + parsed.minute,
+        date.getSeconds() + parsed.second,
+        date.getMilliseconds()
+      )
+    }
+  })
+}
+
+
 }
